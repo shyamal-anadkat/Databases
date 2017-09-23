@@ -1,5 +1,5 @@
 =========================================
-Schema Ideas
+Schema Idea - 1
 =========================================
 :: Tables: 
 1) Categories (ItemID, Category)
@@ -10,30 +10,53 @@ Schema Ideas
 5) ...
 
 
+=========================================
+Schema Idea - 2
+=========================================
+:: Tables: 
+1) Categories (ItemID::ForeignKey, Category)
+2) Bids (UserID::ForeignKey, Time, Amount, ItemID::ForeignKey)
+3) Bidders(Location, Country, UserID, Rating)
+4) Items(ItemID, Name, Location, Country, Buy_Price, Started, Ends)
+5) Sellers(Location, Country, UserID, Rating)
+6) ...
+
+
 
 =========================================
 Notes
 =========================================
 items
-	itemID (#)
+	itemID (#) [integer]
 	Name (String)
 	Category (Array)
 	Currency (String)
-	Buy_Price (String)
-	First_Bid (String)
-	Number_of_Bids (#)
+	Buy_Price (String) [decimal]
+	First_Bid (String) [decimal]
+	Number_of_Bids (#) [integer]
 	Bids (Array)
-		- Location (String)
-		- Country (String)
-		- UserID (String)
-		- Rating(#)
-		- Time(String)
-		- Amount(String)
+		Bidder (obj)
+			- Location (String)
+			- Country (String)
+			- UserID (String)
+			- Rating(#) [integer]
+		Time(String) [datetime]
+		Amount(String) [decimal]
 	Location(String)
 	Country (String)
 	Started (Strings)
-	Ends (String)
+	Ends (String) [datetime]
 	Seller(obj)
 		- UserID (String)
-		- Rating(#)
+		- Rating(#) [integer]
 	Description (String)
+
+
+* Could not locate 'Currency' attribute
+
+=========================================
+Questions
+=========================================
+* How is the location/country of the listing decided? 
+  Is it the seller's location, or is it individually decided for each listing?
+
