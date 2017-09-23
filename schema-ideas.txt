@@ -1,0 +1,4 @@
+1) Categories (ItemID, Category)
+2) Bids (Location, Country, UserID, Rating, Time, Amount, ItemID)
+3) Items(ItemID, Name, Category, Currency, Buy_Price, First_Bid, Number_of_Bids, Location, Country, Started, Ends)
+4) Sellers(UserID, Rating)
