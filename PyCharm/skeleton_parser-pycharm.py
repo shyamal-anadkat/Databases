@@ -1,4 +1,3 @@
-
 """
 FILE: skeleton_parser.py
 ------------------
@@ -31,27 +30,35 @@ from re import sub
 columnSeparator = "|"
 
 # Dictionary of months used for date transformation
-MONTHS = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',\
-        'Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'}
+MONTHS = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', \
+          'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
 """
 Returns true if a file ends in .json
 """
+
+
 def isJson(f):
     return len(f) > 5 and f[-5:] == '.json'
+
 
 """
 Converts month to a number, e.g. 'Dec' to '12'
 """
+
+
 def transformMonth(mon):
     if mon in MONTHS:
         return MONTHS[mon]
     else:
         return mon
 
+
 """
 Transforms a timestamp from Mon-DD-YY HH:MM:SS to YYYY-MM-DD HH:MM:SS
 """
+
+
 def transformDttm(dttm):
     dttm = dttm.strip().split(' ')
     dt = dttm[0].split('-')
@@ -59,35 +66,82 @@ def transformDttm(dttm):
     date += transformMonth(dt[0]) + '-' + dt[1]
     return date + ' ' + dttm[1]
 
+
 """
 Transform a dollar value amount from a string like $3,453.23 to XXXXX.xx
 """
+
 
 def transformDollar(money):
     if money == None or len(money) == 0:
         return money
     return sub(r'[^\d.]', '', money)
 
+
+"""
+As there are unterminated quotation marks, SQLite will throw an error during the import. To prevent this, you need to
+perform both of the following:
+1. Escape every instance of a double quote with another double quote.
+2. Surround all strings with double quotes.
+"""
+
+
+def escapeQuotes(str):
+    if str == None:
+        return str
+    return '"' + str.replace('"', '""') + '"';
+
+
 """
 Parses a single json file. Currently, there's a loop that iterates over each
 item in the data set. Your job is to extend this functionality to create all
 of the necessary SQL tables for your database.
 """
+
+
 def parseJson(json_file):
+    fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat"]
     with open(json_file, 'r') as f:
-        items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
+        items = loads(f.read())['Items']  # creates a Python dictionary of Items for the supplied json file
+        itemF = open(fileNames[0], 'a')
+        # user = open(fileNames[1], 'a')
+        # category = open(fileNames[2], 'a')
+        # bid = open(fileNames[3], 'a')
         for item in items:
             """
             TODO: traverse the items dictionary to extract information from the
             given `json_file' and generate the necessary .dat files to generate
             the SQL tables based on your relation design
             """
+            # Items(ItemID, Seller, Name, Currently, Buy_Price, First_Bid, Started, Ends, Description)
+            itemDict = []
+            itemDict.append(item["ItemID"])
+            itemDict.append(escapeQuotes(item["Seller"]["UserID"]))
+            itemDict.append(escapeQuotes(item["Name"]))
+            itemDict.append(transformDollar(item["Currently"]))
+            if "Buy_Price" in item:
+                itemDict.append(transformDollar(item["Buy_Price"]))
+            else:
+                itemDict.append("NULL")
+            itemDict.append(transformDollar(item["First_Bid"]))
+            itemDict.append(item["Number_of_Bids"])
+            itemDict.append(transformDttm(item["Started"]))
+            itemDict.append(transformDttm(item["Ends"]))
+            if "Description" in item and item["Description"] != None:
+                itemDict.append(escapeQuotes(item["Description"]))
+            else:
+                itemDict.append("NULL")
+            itemF.write(columnSeparator.join(map(lambda str: str or "", itemDict)))
+            itemF.write("\n")
             pass
+
 
 """
 Loops through each json files provided on the command line and passes each file
 to the parser
 """
+
+
 def main(argv):
     if len(argv) < 2:
         print >> sys.stderr, 'Usage: python skeleton_json_parser.py <path to json files>'
@@ -97,6 +151,7 @@ def main(argv):
         if isJson(f):
             parseJson(f)
             print "Success parsing " + f
+
 
 if __name__ == '__main__':
     main(sys.argv)
