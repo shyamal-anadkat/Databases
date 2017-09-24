@@ -98,6 +98,27 @@ item in the data set. Your job is to extend this functionality to create all
 of the necessary SQL tables for your database.
 """
 
+def addToItems(item, itemF):
+    itemDict = []
+    itemDict.append(item["ItemID"])
+    itemDict.append(escapeQuotes(item["Seller"]["UserID"]))
+    itemDict.append(escapeQuotes(item["Name"]))
+    itemDict.append(transformDollar(item["Currently"]))
+    if "Buy_Price" in item:
+        itemDict.append(transformDollar(item["Buy_Price"]))
+    else:
+        itemDict.append("NULL")
+    itemDict.append(transformDollar(item["First_Bid"]))
+    itemDict.append(item["Number_of_Bids"])
+    itemDict.append(transformDttm(item["Started"]))
+    itemDict.append(transformDttm(item["Ends"]))
+    if "Description" in item and item["Description"] != None:
+        itemDict.append(escapeQuotes(item["Description"]))
+    else:
+        itemDict.append("NULL")
+    itemF.write(columnSeparator.join(map(lambda str: str or "", itemDict)))
+    itemF.write("\n")
+
 
 def parseJson(json_file):
     fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat"]
@@ -114,25 +135,7 @@ def parseJson(json_file):
             the SQL tables based on your relation design
             """
             # Items(ItemID, Seller, Name, Currently, Buy_Price, First_Bid, Started, Ends, Description)
-            itemDict = []
-            itemDict.append(item["ItemID"])
-            itemDict.append(escapeQuotes(item["Seller"]["UserID"]))
-            itemDict.append(escapeQuotes(item["Name"]))
-            itemDict.append(transformDollar(item["Currently"]))
-            if "Buy_Price" in item:
-                itemDict.append(transformDollar(item["Buy_Price"]))
-            else:
-                itemDict.append("NULL")
-            itemDict.append(transformDollar(item["First_Bid"]))
-            itemDict.append(item["Number_of_Bids"])
-            itemDict.append(transformDttm(item["Started"]))
-            itemDict.append(transformDttm(item["Ends"]))
-            if "Description" in item and item["Description"] != None:
-                itemDict.append(escapeQuotes(item["Description"]))
-            else:
-                itemDict.append("NULL")
-            itemF.write(columnSeparator.join(map(lambda str: str or "", itemDict)))
-            itemF.write("\n")
+            addToItems(item, itemF)
             pass
 
 
