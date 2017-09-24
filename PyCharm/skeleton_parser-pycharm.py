@@ -33,6 +33,8 @@ columnSeparator = "|"
 MONTHS = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', \
           'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
+users = []
+
 """
 Returns true if a file ends in .json
 """
@@ -119,15 +121,29 @@ def addToItems(item, itemF):
     itemF.write(columnSeparator.join(map(lambda str: str or "", itemDict)))
     itemF.write("\n")
 
+def addSellers(item, userF):
+    bids = item["Bids"]
+
+    if item["Seller"]["UserID"] not in users:
+        users.append(item["Seller"]["UserID"])
+        user = []
+        user.append(escapeQuotes(item["Seller"]["UserID"]))
+        user.append(escapeQuotes(item["Seller"]["Rating"]))
+        user.append(escapeQuotes(item["Location"]))
+        user.append(escapeQuotes(item["Country"]))
+        userF.write(columnSeparator.join(map(lambda str : str or "", user)))
+
+
+
 
 def parseJson(json_file):
     fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat"]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items']  # creates a Python dictionary of Items for the supplied json file
         itemF = open(fileNames[0], 'a')
-        # user = open(fileNames[1], 'a')
-        # category = open(fileNames[2], 'a')
-        # bid = open(fileNames[3], 'a')
+        userF = open(fileNames[1], 'a')
+        categoryF = open(fileNames[2], 'a')
+        bidF = open(fileNames[3], 'a')
         for item in items:
             """
             TODO: traverse the items dictionary to extract information from the
@@ -136,6 +152,7 @@ def parseJson(json_file):
             """
             # Items(ItemID, Seller, Name, Currently, Buy_Price, First_Bid, Started, Ends, Description)
             addToItems(item, itemF)
+            addSellers(item, userF)
             pass
 
 
