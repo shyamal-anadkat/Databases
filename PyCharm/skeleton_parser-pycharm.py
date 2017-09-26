@@ -137,20 +137,30 @@ def addSellers(item, userF):
         userF.write("\n")
 
 
-def addBidders(item, userF):
+def addBidsAndBidders(item, userF, bidsF):
     bids = item["Bids"]
+
     if bids != None:
         for bid in bids:
-            bidder = bid["Bid"]["Bidder"]
-            if bidder["UserID"] not in users:
-                users.append(bidder["UserID"])
+            bidData = bid["Bid"]
+            if (bidData["Bidder"]["UserID"] not in users):
+                bidder = bidData["Bidder"]
                 user = []
-                user.append(bidder["UserID"])
+                user.append(escapeQuotes(bidder["UserID"]))
                 user.append(bidder["Rating"])
                 user.append(escapeQuotes(bidder.get("Location", "NULL")))
                 user.append(escapeQuotes(bidder.get("Country", "NULL")))
                 userF.write(columnSeparator.join(map(lambda str: str or "", user)))
                 userF.write("\n")
+
+
+
+            bidMap = []
+            bidMap.append(escapeQuotes(bidData["Bidder"]["UserID"]))
+            bidMap.append(transformDttm(bidData["Time"]))
+            bidMap.append(transformDollar(bidData["Amount"]))
+            bidsF.write(columnSeparator.join(map(lambda str: str or "", bidMap)))
+            bidsF.write("\n")
 
 """
 Parsing JSON to extract schema
@@ -162,7 +172,7 @@ def parseJson(json_file):
         itemF = open(fileNames[0], 'a')
         userF = open(fileNames[1], 'a')
         #categoryF = open(fileNames[2], 'a')
-        #bidF = open(fileNames[3], 'a')
+        bidF = open(fileNames[3], 'a')
         for item in items:
             """
             TODO: traverse the items dictionary to extract information from the
@@ -173,7 +183,8 @@ def parseJson(json_file):
             addToItems(item, itemF)
             # User(UserID, Rating, Location, Country)
             addSellers(item, userF)
-            addBidders(item, userF)
+            # Bids(UserID, Time, Amount)
+            addBidsAndBidders(item, userF, bidF)
             pass
 
 
