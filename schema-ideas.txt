@@ -1,7 +1,7 @@
 =========================================
 Schema Idea - 1
 =========================================
-:: Tables:  
+:: Tables:
 1) Categories (ItemID, Category)  key = (ItemID, Category)
 2) Bids (UserID, Time, Amount, ItemID)  key = ??
 3) Items(ItemID, Name, Currently, Buy_Price, First_Bid, Started, Ends)  key = ItemID
@@ -11,13 +11,12 @@ Schema Idea - 1
 =========================================
 Schema Idea - 2
 =========================================
-:: Tables: 
-1) Categories (ItemID::ForeignKey, Category)
-2) Bids (UserID::ForeignKey, Time, Amount, ItemID::ForeignKey)
-3) Bidders(Location, Country, UserID, Rating)
-4) Items(ItemID, Name, Location, Country, Buy_Price, Started, Ends)
-5) Sellers(Location, Country, UserID, Rating)
-6) ...
+:: Tables:
+1) Categories (ItemID::ForeignKey, Category::ForeignKey)  key = (ItemID, Category)
+2) CategoryList (Category) key = (Category)
+2) Bids (UserID::ForeignKey, Time, Amount, ItemID::ForeignKey)  key = ??
+3) Items(ItemID, UserID::ForeignKey, Name, Currently, Buy_Price, First_Bid, Started, Ends)  key = ItemID
+4) User(UserID, Rating, Location, Country) key = UserID
 
 
 =========================================
@@ -68,5 +67,5 @@ another auction.
 =========================================
 Questions
 =========================================
-* How is the location/country of the listing decided? 
+* How is the location/country of the listing decided?
   Is it the seller's location, or is it individually decided for each listing?
