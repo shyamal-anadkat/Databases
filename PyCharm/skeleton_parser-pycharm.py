@@ -34,6 +34,7 @@ MONTHS = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun'
           'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
 users = []
+category_list = []
 
 """
 Returns true if a file ends in .json
@@ -163,7 +164,7 @@ def addBidsAndBidders(item, userF, bidsF):
             bidsF.write(columnSeparator.join(map(lambda str: str or "", bidMap)))
             bidsF.write("\n")
 
-def addCategories (item, categoryF):
+def addCategories (item, categoryF, categoryListF):
     categories = item["Category"]
     itemId = item["ItemID"]
     for category in categories:
@@ -173,17 +174,23 @@ def addCategories (item, categoryF):
         categoryF.write(columnSeparator.join(map(lambda str: str or "", categoryMap)))
         categoryF.write("\n")
 
+        if category not in category_list:
+            category_list.append(category)
+            categoryListF.write(category)
+            categoryListF.write("\n")
+
 """
 Parsing JSON to extract schema
 """
 def parseJson(json_file):
-    fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat"]
+    fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat", "category_list.dat"]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items']  # creates a Python dictionary of Items for the supplied json file
         itemF = open(fileNames[0], 'a')
         userF = open(fileNames[1], 'a')
         categoryF = open(fileNames[2], 'a')
         bidF = open(fileNames[3], 'a')
+        categoryListF = open(fileNames[4], 'a')
         for item in items:
             """
             TODO: traverse the items dictionary to extract information from the
@@ -197,7 +204,9 @@ def parseJson(json_file):
             # Bids(UserID, Time, Amount)
             addBidsAndBidders(item, userF, bidF)
             # Category(ItemID, Category)
-            addCategories(item, categoryF)
+            # CategoryList (Category)
+            addCategories(item, categoryF, categoryListF)
+
             pass
 
 
