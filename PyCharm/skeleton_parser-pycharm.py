@@ -157,6 +157,7 @@ def addBidsAndBidders(item, userF, bidsF):
 
             bidMap = []
             bidMap.append(escapeQuotes(bidData["Bidder"]["UserID"]))
+            bidMap.append(item["ItemID"])
             bidMap.append(transformDttm(bidData["Time"]))
             bidMap.append(transformDollar(bidData["Amount"]))
             bidsF.write(columnSeparator.join(map(lambda str: str or "", bidMap)))
