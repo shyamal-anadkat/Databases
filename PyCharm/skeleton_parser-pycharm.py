@@ -163,6 +163,16 @@ def addBidsAndBidders(item, userF, bidsF):
             bidsF.write(columnSeparator.join(map(lambda str: str or "", bidMap)))
             bidsF.write("\n")
 
+def addCategories (item, categoryF):
+    categories = item["Category"]
+    itemId = item["ItemID"]
+    for category in categories:
+        categoryMap = []
+        categoryMap.append(itemId)
+        categoryMap.append(escapeQuotes(category))
+        categoryF.write(columnSeparator.join(map(lambda str: str or "", categoryMap)))
+        categoryF.write("\n")
+
 """
 Parsing JSON to extract schema
 """
@@ -172,7 +182,7 @@ def parseJson(json_file):
         items = loads(f.read())['Items']  # creates a Python dictionary of Items for the supplied json file
         itemF = open(fileNames[0], 'a')
         userF = open(fileNames[1], 'a')
-        #categoryF = open(fileNames[2], 'a')
+        categoryF = open(fileNames[2], 'a')
         bidF = open(fileNames[3], 'a')
         for item in items:
             """
@@ -186,6 +196,8 @@ def parseJson(json_file):
             addSellers(item, userF)
             # Bids(UserID, Time, Amount)
             addBidsAndBidders(item, userF, bidF)
+            # Category(ItemID, Category)
+            addCategories(item, categoryF)
             pass
 
 
