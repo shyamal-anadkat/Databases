@@ -100,6 +100,7 @@ item in the data set. Your job is to extend this functionality to create all
 of the necessary SQL tables for your database.
 """
 
+
 def addToItems(item, itemF):
     itemDict = []
     itemDict.append(item["ItemID"])
@@ -121,29 +122,47 @@ def addToItems(item, itemF):
     itemF.write(columnSeparator.join(map(lambda str: str or "", itemDict)))
     itemF.write("\n")
 
+
+
 def addSellers(item, userF):
-    bids = item["Bids"]
-
-    if item["Seller"]["UserID"] not in users:
-        users.append(item["Seller"]["UserID"])
+    seller = item["Seller"]["UserID"];
+    if seller not in users:
+        users.append(seller)
         user = []
-        user.append(escapeQuotes(item["Seller"]["UserID"]))
-        user.append(escapeQuotes(item["Seller"]["Rating"]))
-        user.append(escapeQuotes(item["Location"]))
-        user.append(escapeQuotes(item["Country"]))
-        userF.write(columnSeparator.join(map(lambda str : str or "", user)))
+        user.append(seller)
+        user.append(item["Seller"]["Rating"])
+        user.append(escapeQuotes(item["Location"])) #can this be null ?
+        user.append(escapeQuotes(item["Country"]))  #can this be null ?
+        userF.write(columnSeparator.join(map(lambda str: str or "", user)))
+        userF.write("\n")
 
 
+def addBidders(item, userF):
+    bids = item["Bids"]
+    if bids != None:
+        for bid in bids:
+            bidder = bid["Bid"]["Bidder"]
+            if bidder["UserID"] not in users:
+                users.append(bidder["UserID"])
+                user = []
+                user.append(bidder["UserID"])
+                user.append(bidder["Rating"])
+                user.append(escapeQuotes(bidder.get("Location", "NULL")))
+                user.append(escapeQuotes(bidder.get("Country", "NULL")))
+                userF.write(columnSeparator.join(map(lambda str: str or "", user)))
+                userF.write("\n")
 
-
+"""
+Parsing JSON to extract schema
+"""
 def parseJson(json_file):
     fileNames = ["items.dat", "users.dat", "categories.dat", "bids.dat"]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items']  # creates a Python dictionary of Items for the supplied json file
         itemF = open(fileNames[0], 'a')
         userF = open(fileNames[1], 'a')
-        categoryF = open(fileNames[2], 'a')
-        bidF = open(fileNames[3], 'a')
+        #categoryF = open(fileNames[2], 'a')
+        #bidF = open(fileNames[3], 'a')
         for item in items:
             """
             TODO: traverse the items dictionary to extract information from the
@@ -152,7 +171,9 @@ def parseJson(json_file):
             """
             # Items(ItemID, Seller, Name, Currently, Buy_Price, First_Bid, Started, Ends, Description)
             addToItems(item, itemF)
+            # User(UserID, Rating, Location, Country)
             addSellers(item, userF)
+            addBidders(item, userF)
             pass
 
 
