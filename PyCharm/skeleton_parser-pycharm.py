@@ -176,7 +176,7 @@ def addCategories (item, categoryF, categoryListF):
 
         if category not in category_list:
             category_list.append(category)
-            categoryListF.write(category)
+            categoryListF.write(escapeQuotes(category))
             categoryListF.write("\n")
 
 """
