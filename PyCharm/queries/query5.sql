@@ -1,5 +1,7 @@
 SELECT COUNT(*)
-FROM User
-WHERE Location <> null
-AND Country <> null
-AND Rating > 100;
+FROM (
+    SELECT DISTINCT User.UserID
+    FROM User, Item
+    WHERE User.UserID = Item.UserID
+    AND User.Rating > 100
+)

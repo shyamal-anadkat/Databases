@@ -1,4 +1,8 @@
 SELECT DISTINCT ItemID
 FROM Bids
-ORDER BY Amount DESC
-LIMIT 4;
+WHERE Price = (
+    SELECT Price
+    FROM Bids
+    ORDER BY Price
+    LIMIT 1
+);
