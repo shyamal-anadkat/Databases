@@ -1,7 +1,7 @@
 SELECT COUNT(*)
 FROM (
-    SELECT DISTINCT User.UserID
-    FROM User, Item
-    WHERE User.UserID = Item.UserID
-    AND User.Rating > 100
-)
+    SELECT DISTINCT Users.UserID, Users.Rating
+    FROM Users, Items
+    WHERE Users.UserID = Items.SellerID
+    AND Users.Rating > 1000
+);

@@ -1,4 +1,7 @@
-SELECT DISTINCT Categories.ItemID
-FROM Categories, Bids
-WHERE Categories.ItemID = Bids.ItemID
-AND Amount > 100;
+SELECT COUNT(*)
+FROM (
+    SELECT DISTINCT Category.Category
+    FROM Category, Bids
+    WHERE Category.ItemID = Bids.ItemID
+    AND Bids.Amount > 100
+);

@@ -1,6 +1,6 @@
 SELECT COUNT(*)
 FROM (
     SELECT DISTINCT Bids.UserID
-    FROM Bids, Item
-    WHERE Bids.UserID = Item.UserID
+    FROM Bids, Items
+    WHERE Bids.UserID = Items.SellerID
 );
