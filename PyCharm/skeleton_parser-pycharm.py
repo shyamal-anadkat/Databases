@@ -101,7 +101,7 @@ of the necessary SQL tables for your database.
 """
 
 
-def addToItems(item, itemF):
+def addItems(item, itemF):
     itemDict = []
     itemDict.append(item["ItemID"])
     itemDict.append(escapeQuotes(item["Seller"]["UserID"]))
@@ -192,7 +192,7 @@ def parseJson(json_file):
             the SQL tables based on your relation design
             """
             # Items(ItemID, Seller, Name, Currently, Buy_Price, First_Bid, Started, Ends, Description)
-            addToItems(item, itemF)
+            addItems(item, itemF)
             # User(UserID, Rating, Location, Country)
             addSellers(item, userF)
             # Bids(UserID, Time, Amount)
