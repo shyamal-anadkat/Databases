@@ -1,3 +1,3 @@
 SELECT COUNT(*)
-FROM User
+FROM Users
 WHERE Location = 'New York';

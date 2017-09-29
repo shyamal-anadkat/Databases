@@ -33,7 +33,6 @@ columnSeparator = "|"
 MONTHS = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', \
           'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
-users = []
 category_list = []
 
 """
@@ -126,16 +125,13 @@ def addToItems(item, itemF):
 
 
 def addSellers(item, userF):
-    seller = item["Seller"]["UserID"];
-    if seller not in users:
-        users.append(seller)
-        user = []
-        user.append(seller)
-        user.append(item["Seller"]["Rating"])
-        user.append(escapeQuotes(item["Location"])) #can this be null ?
-        user.append(escapeQuotes(item["Country"]))  #can this be null ?
-        userF.write(columnSeparator.join(map(lambda str: str or "", user)))
-        userF.write("\n")
+    user = []
+    user.append(escapeQuotes(item["Seller"]["UserID"]))
+    user.append(item["Seller"]["Rating"])
+    user.append(escapeQuotes(item["Location"])) #can this be null ?
+    user.append(escapeQuotes(item["Country"]))  #can this be null ?
+    userF.write(columnSeparator.join(map(lambda str: str or "", user)))
+    userF.write("\n")
 
 
 def addBidsAndBidders(item, userF, bidsF):
@@ -144,16 +140,14 @@ def addBidsAndBidders(item, userF, bidsF):
     if bids != None:
         for bid in bids:
             bidData = bid["Bid"]
-            if (bidData["Bidder"]["UserID"] not in users):
-                bidder = bidData["Bidder"]
-                user = []
-                user.append(escapeQuotes(bidder["UserID"]))
-                user.append(bidder["Rating"])
-                user.append(escapeQuotes(bidder.get("Location", "NULL")))
-                user.append(escapeQuotes(bidder.get("Country", "NULL")))
-                userF.write(columnSeparator.join(map(lambda str: str or "", user)))
-                userF.write("\n")
-
+            bidder = bidData["Bidder"]
+            user = []
+            user.append(escapeQuotes(bidder["UserID"]))
+            user.append(bidder["Rating"])
+            user.append(escapeQuotes(bidder.get("Location", "NULL")))
+            user.append(escapeQuotes(bidder.get("Country", "NULL")))
+            userF.write(columnSeparator.join(map(lambda str: str or "", user)))
+            userF.write("\n")
 
 
             bidMap = []
