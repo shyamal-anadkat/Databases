@@ -1,3 +1,5 @@
+#!/bin/sh
+
 rm -rf *.dat;
 
 python skeleton_parser-pycharm.py ebay_data/items-*.json
