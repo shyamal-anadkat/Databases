@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm -rf *.dat;
+rm -f user.dat bid.dat category.dat item.dat categoryList.dat;
 
 python skeleton_parser-pycharm.py ebay_data/items-*.json
 
@@ -10,8 +10,4 @@ sort categories.dat | uniq > category.dat
 sort items.dat | uniq > item.dat
 sort category_list.dat | uniq > categoryList.dat
 
-rm users.dat;
-rm bids.dat;
-rm categories.dat;
-rm items.dat;
-rm category_list.dat;
+rm -f users.dat bids.dat categories.dat items.dat category_list.dat;
