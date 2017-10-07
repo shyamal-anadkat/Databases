@@ -1,0 +1,71 @@
+=========================================
+Schema Idea - 1
+=========================================
+:: Tables:
+1) Categories (ItemID, Category)  key = (ItemID, Category)
+2) Bids (UserID, Time, Amount, ItemID)  key = ??
+3) Items(ItemID, Name, Currently, Buy_Price, First_Bid, Started, Ends)  key = ItemID
+4) User(UserID, Rating, Location, Country) key = UserID
+
+
+=========================================
+Schema Idea - FINAL
+=========================================
+:: Tables:
+1) Categories (ItemID::ForeignKey, Category::ForeignKey)  key = (ItemID, Category)
+2) CategoryList (Category) key = (Category)
+2) Bids (UserID::ForeignKey, Time, Amount, ItemID::ForeignKey)  key = composite
+3) Items(ItemID, UserID::ForeignKey, Name, Buy_Price, First_Bid, Started, Ends, Description)  key = ItemID
+4) User(UserID, Rating, Location, Country) key = UserID
+
+
+=========================================
+Dependencies
+=========================================
+
+
+=========================================
+Notes
+=========================================
+items
+	itemID (#) [integer]
+	Name (String)
+	Category (Array)
+	Currently (String)
+	Buy_Price (String) [decimal]
+	First_Bid (String) [decimal]
+	Number_of_Bids (#) [integer]
+	Bids (Array)
+	 - Bid(obj)
+		- Bidder (obj)
+				- Location (String)
+				- Country (String)
+				- UserID (String)
+				- Rating(#) [integer]
+		- Time(String) [datetime]
+		- Amount(String) [decimal]
+	Location(String)
+	Country (String)
+	Started (Strings)
+	Ends (String) [datetime]
+	Seller(obj)
+		- UserID (String)
+		- Rating(#) [integer]
+	Description (String)
+
+=========================================
+
+-- Attribute UserID uniquely identifies a user. Attribute
+Rating is the user's rating. Note that a user may be a
+bidder in one auction and a seller in another. However, his
+Rating, Location, and Country information are the same
+wherever he appears in our data (which reflects a snapshot
+in time). Note this implies that UserIDs with missing
+location or country information cannot be sellers in
+another auction.
+
+=========================================
+Questions
+=========================================
+* How is the location/country of the listing decided?
+  Is it the seller's location, or is it individually decided for each listing?
