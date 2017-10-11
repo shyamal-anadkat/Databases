@@ -37,7 +37,8 @@ BufMgr::BufMgr(std::uint32_t bufs)
 
 BufMgr::~BufMgr() {
 
-	//TODO: flush all dirty pages
+	//TODO: flush all dirty pages (iterate)
+	//deallocates the buffer pool and the BufDesc table.
 
 	delete [] bufPool;
 	delete [] bufDescTable;
@@ -55,6 +56,13 @@ void BufMgr::allocBuf(FrameId & frame)
 
 	//allocate a free frame
 	BufMgr::advanceClock();
+	// if necessary, writing a dirty page back to disk. 
+	//Throws BufferExceededException if all buffer frames are pinned
+	//Make sure that if the buffer frame allocated has a valid page in it, 
+	//you remove the appropriate entry from the hash table.
+
+
+
 }
 
 	
@@ -71,9 +79,10 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 		page = &bufPool[frameNum];
 	}
 
-	catch(HashNotFoundException hnfe) {
+	catch(HashNotFoundException &hnfe) {
 		//new frame allocated from buffer pool for reading page
-
+		//insert
+		hashTable->insert(file, pageNo, frameNo);  //HashTableException (optional) ?
 
 	}
 
@@ -82,6 +91,22 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 
 void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty) 
 {
+	/* Decrements the pinCnt of the frame containing (file, PageNo) and, if dirty == true, sets
+the dirty bit. Throws PAGENOTPINNED if the pin count is already 0. Does nothing if
+page is not found in the hash table lookup*/
+	FrameID frameNum;
+	try {
+		hashTable->lookup(file, pageNo, frameNum);
+		if (bufDescTable[frameNum].pinCnt == 0) 
+			throw PageNotPinnedException(file.filename, pageNo, frameNum);
+		bufDescTable[frameNum].pinCnt -= 1;
+		
+
+	}
+
+	catch(HashNotFoundException hnfe) {
+		//do nothing
+	}
 }
 
 void BufMgr::flushFile(const File* file) 
