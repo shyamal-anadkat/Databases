@@ -36,20 +36,47 @@ BufMgr::BufMgr(std::uint32_t bufs)
 
 
 BufMgr::~BufMgr() {
+
+	//TODO: flush all dirty pages
+
+	delete [] bufPool;
+	delete [] bufDescTable;
+	delete hashTable;
 }
 
 void BufMgr::advanceClock()
-{
-
+{	
+	//modulo to get index (frame ID)
+	clockHand = (clockHand + 1) % numBufs;
 }
 
 void BufMgr::allocBuf(FrameId & frame) 
 {
+
+	//allocate a free frame
+	BufMgr::advanceClock();
 }
 
 	
 void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 {
+
+	FrameID frameNum;
+	try {
+		//set refBit to true, increment pinCount
+		//return pointer to frame 
+		hashTable->lookup(file, pageNo, frameNum);
+		bufDescTable[frameNum].refbit = true;
+		bufDescTable[frameNum].pinCnt++;
+		page = &bufPool[frameNum];
+	}
+
+	catch(HashNotFoundException hnfe) {
+		//new frame allocated from buffer pool for reading page
+
+
+	}
+
 }
 
 
