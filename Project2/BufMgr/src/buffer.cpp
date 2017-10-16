@@ -86,7 +86,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
     /* Decrements the pinCnt of the frame containing (file, PageNo) and, if
-     * dirty== true, sets
+     * dirty == true, sets
      * the dirty bit. Throws PAGENOTPINNED if the pin count is already 0. Does
      * nothing if
      * page is not found in the hash table lookup*/
@@ -100,9 +100,13 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
             throw PageNotPinnedException(file->filename(), pageNo, frameNum);
         }
         bufDescTable[frameNum].pinCnt--;
+        
+        if (bufDescTable[frameNum].pinCnt == 0) {
+            bufDescTable[frameNum].refbit = 1;
+        }
 
         if (dirty) {
-            bufDescTable[frameNum].dirty = dirty;
+            bufDescTable[frameNum].dirty = true;
         }
     }
 
