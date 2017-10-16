@@ -106,6 +106,30 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 
 void BufMgr::flushFile(const File *file)
 {
+    for (FrameId i = 0; i < numBufs; i++)
+    {
+        BufDesc *bd = &bufDescTable[i];
+
+        if ((bd->file) == file)
+        {
+            if (bd->pinCnt > 0)
+            {
+                throw PagePinnedException(bd->file->filename(), bd->pageNo, i);
+            }
+            if (!bd->valid)
+            {
+                throw BadBufferException(i, bd->dirty, false, bd->refbit);
+            }
+
+            if (bd->dirty)
+            {
+                bd->file->writePage(bufPool[i]);
+            }
+
+            hashTable->remove(bd->file, bd->pageNo);
+            bd->Clear();
+        }
+    }
 }
 
 void BufMgr::allocPage(File *file, PageId&pageNo, Page *& page)
@@ -115,12 +139,11 @@ void BufMgr::allocPage(File *file, PageId&pageNo, Page *& page)
 void BufMgr::disposePage(File *file, const PageId PageNo)
 {
     try {
-        FrameId frameNum = NULL;
+        FrameId frameNum;
 
-        hashTable->lookup(file, pageNo, frameNum);
+        hashTable->lookup(file, PageNo, frameNum);
         bufDescTable[frameNum].Clear();
-        hashTable->remove(file, pageNo);
-
+        hashTable->remove(file, PageNo);
     } catch (HashNotFoundException e) {
         // Page not in the buffer.
         // Nothing more to be done to the buffer.
