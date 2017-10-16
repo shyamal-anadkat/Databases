@@ -63,11 +63,10 @@ void BufMgr::allocBuf(FrameId& frame)
 
 void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 {
-    FrameId frameNum;
-
     try {
         // set refBit to true, increment pinCount
         // return pointer to frame
+        FrameId frameNum;
         hashTable->lookup(file, pageNo, frameNum);
         bufDescTable[frameNum].refbit = true;
         bufDescTable[frameNum].pinCnt++;
@@ -77,7 +76,12 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
     catch (HashNotFoundException& hnfe) {
         // new frame allocated from buffer pool for reading page
         // insert
+        FrameId frameNum;
+        allocBuf(frameNum);
+        bufPool[frameNum] = file->readPage(pageNo);
         hashTable->insert(file, pageNo, frameNum);
+        bufDescTable[frameNum].Set(file, pageNo);
+        page = &bufPool[frameNum];
 
         // HashTableException (optional) ?
     }
@@ -100,9 +104,9 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
             throw PageNotPinnedException(file->filename(), pageNo, frameNum);
         }
         bufDescTable[frameNum].pinCnt--;
-        
+
         if (bufDescTable[frameNum].pinCnt == 0) {
-            bufDescTable[frameNum].refbit = 1;
+            bufDescTable[frameNum].refbit = true;
         }
 
         if (dirty) {
