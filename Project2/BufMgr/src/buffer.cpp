@@ -28,15 +28,15 @@ BufMgr::BufMgr(std::uint32_t bufs) : numBufs(bufs)
     bufPool = new Page[bufs];
 
     int htsize = ((((int)(bufs * 1.2)) * 2) / 2) + 1;
-    hashTable = new BufHashTbl(htsize);       // allocate the buffer hash table
+    hashTable = new BufHashTbl(htsize);   // allocate the buffer hash table
 
     clockHand = bufs - 1;
 }
 
 BufMgr::~BufMgr()
 {
-    //TODO: flush all dirty pages (iterate)
-    //deallocates the buffer pool and the BufDesc table.
+//TODO: flush all dirty pages (iterate)
+//deallocates the buffer pool and the BufDesc table.
 
     delete [] bufPool;
     delete [] bufDescTable;
@@ -45,7 +45,7 @@ BufMgr::~BufMgr()
 
 void BufMgr::advanceClock()
 {
-    //modulo to get index (frame ID)
+//modulo to get index (frame ID)
     clockHand = (clockHand + 1) % numBufs;
 }
 
@@ -75,7 +75,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
     catch (HashNotFoundException&hnfe) {
         //new frame allocated from buffer pool for reading page
         //insert
-        hashTable->insert(file, pageNo, frameNum);                                                                                                                         //HashTableException (optional) ?
+        hashTable->insert(file, pageNo, frameNum);                                                                                                                 //HashTableException (optional) ?
     }
 }
 
