@@ -53,12 +53,41 @@ void BufMgr::advanceClock()
 void BufMgr::allocBuf(FrameId& frame)
 {
     // allocate a free frame
-    BufMgr::advanceClock();
-
     // if necessary, writing a dirty page back to disk.
     // Throws BufferExceededException if all buffer frames are pinned
     // Make sure that if the buffer frame allocated has a valid page in it,
     // you remove the appropriate entry from the hash table.
+
+    std::uint32_t numPinned = 0;
+
+    bool found = false;
+
+    do {
+        BufDesc *bd = &bufDescTable[clockHand];
+
+        if (!bd->valid) {
+            found = true;
+            frame = clockHand;
+        } else if (bd->pinCnt) {
+            numPinned++;
+            advanceClock();
+        } else if (bd->refbit) {
+            bd->refbit = 0;
+            advanceClock();
+        } else {
+            hashTable->remove(bd->file, bd->pageNo);
+            if (bd->dirty) {
+                bd->file->writePage(bufPool[clockHand]);
+            }
+            found = true;
+        }
+    } while (!found && numPinned < numBufs);
+
+    if (numPinned == numBufs) {
+        throw BufferExceededException();
+    }
+
+    frame = clockHand;
 }
 
 void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
