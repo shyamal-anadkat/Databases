@@ -99,10 +99,15 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
         {
             throw PageNotPinnedException(file->filename(), pageNo, frameNum);
         }
-        bufDescTable[frameNum].pinCnt -= 1;
+        bufDescTable[frameNum].pinCnt--;
+
+        if (dirty) {
+            bufDescTable[frameNum].dirty = dirty;
+        }
     }
 
     catch (HashNotFoundException hnfe) {
+        // No corresponding frame found.
         // do nothing
     }
 }
