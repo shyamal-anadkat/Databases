@@ -75,11 +75,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
     catch (HashNotFoundException&hnfe) {
         //new frame allocated from buffer pool for reading page
         //insert
-
-
-
-        hashTable->insert(file, pageNo, frameNum);
-        // HashTableException (optional) ?
+        hashTable->insert(file, pageNo, frameNum);                                                                                                                 //HashTableException (optional) ?
     }
 }
 
@@ -114,20 +110,6 @@ void BufMgr::allocPage(File *file, PageId&pageNo, Page *& page)
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
 {
-    try {
-        FrameId frameNum = NULL;
-
-        hashTable->lookup(file, pageNo, frameNum);
-        bufDescTable[frameNum].Clear();
-        hashTable->remove(file, pageNo);
-
-    } catch (HashNotFoundException e) {
-        // Page not in the buffer.
-        // Nothing more to be done to the buffer.
-        // Ignore the exception.
-    }
-
-    file->deletePage(PageNo);
 }
 
 void BufMgr::printSelf(void)
