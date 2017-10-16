@@ -138,13 +138,13 @@ void BufMgr::flushFile(const File *file)
 
 void BufMgr::allocPage(File *file, PageId& pageNo, Page *& page)
 {
-    page = file->allocatePage();
+    *page = file->allocatePage();
 
     FrameId id;
     allocBuf(id);
 
-    hashTable->insert(file, pageNo, page);
-    bufDescTable[i].Set(file, pageNo);
+    hashTable->insert(file, pageNo, id);
+    bufDescTable[id].Set(file, pageNo);
 }
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
