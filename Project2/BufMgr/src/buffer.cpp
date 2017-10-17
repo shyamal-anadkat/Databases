@@ -79,6 +79,7 @@ void BufMgr::allocBuf(FrameId& frame)
             if (bd->dirty) {
                 bd->file->writePage(bufPool[clockHand]);
             }
+            bd->Clear();
             found = true;
         }
     } while (!found && numPinned < numBufs);
@@ -119,8 +120,8 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
     /* Decrements the pinCnt of the frame containing (file, PageNo) and, if
-     * dirty == true, sets
-     * the dirty bit. Throws PAGENOTPINNED if the pin count is already 0. Does
+     * dirty == true, sets the dirty bit.
+     * Throws PAGENOTPINNED if the pin count is already 0. Does
      * nothing if
      * page is not found in the hash table lookup*/
     FrameId frameNum;
