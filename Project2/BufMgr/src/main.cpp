@@ -38,7 +38,7 @@ void test5();
 void test6();
 void testBufMgr();
 
-int main() 
+int main()
 {
 	//Following code shows how to you File and Page classes
 
@@ -55,7 +55,7 @@ int main()
   {
     // Create a new database file.
     File new_file = File::create(filename);
-    
+
     // Allocate some pages and put data on them.
     PageId third_page_number;
     for (int i = 0; i < 5; ++i) {
@@ -138,7 +138,7 @@ void testBufMgr()
 	file5ptr = &file5;
 
 	//Test buffer manager
-	//Comment tests which you do not wish to run now. Tests are dependent on their preceding tests. So, they have to be run in the following order. 
+	//Comment tests which you do not wish to run now. Tests are dependent on their preceding tests. So, they have to be run in the following order.
 	//Commenting  a particular test requires commenting all tests that follow it else those tests would fail.
 	test1();
 	test2();
@@ -196,7 +196,7 @@ void test2()
 	//Writing and reading back multiple files
 	//The page number and the value should match
 
-	for (i = 0; i < num/3; i++) 
+	for (i = 0; i < num/3; i++)
 	{
 		bufMgr->allocPage(file2ptr, pageno2, page2);
 		sprintf((char*)tmpbuf, "test.2 Page %d %7.1f", pageno2, (float)pageno2);
@@ -314,7 +314,7 @@ void test6()
 
 	std::cout << "Test 6 passed" << "\n";
 
-	for (i = 1; i <= num; i++) 
+	for (i = 1; i <= num; i++)
 		bufMgr->unPinPage(file1ptr, i, true);
 
 	bufMgr->flushFile(file1ptr);
