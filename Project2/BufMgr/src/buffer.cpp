@@ -180,13 +180,17 @@ void BufMgr::flushFile(const File *file)
 
 void BufMgr::allocPage(File *file, PageId& pageNo, Page *& page)
 {
-    *page = file->allocatePage();
-
+    // std::cout << "Here 3\n";
+    Page *new_page = new Page();
+    *new_page = file->allocatePage();
+    pageNo = new_page->page_number();
     FrameId id;
     allocBuf(id);
 
     hashTable->insert(file, pageNo, id);
     bufDescTable[id].Set(file, pageNo);
+    bufPool[id] = *new_page;
+    page = &bufPool[id];
 }
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
