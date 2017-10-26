@@ -248,6 +248,13 @@ void BufMgr::disposePage(File *file, const PageId PageNo)
   {
     FrameId frameNum;
     hashTable->lookup(file, PageNo, frameNum);
+    BufDesc *bd = &bufDescTable[frameNum];
+    
+    if(bufDescTable[frameNum].pinCnt != 0) {
+    	throw PagePinnedException
+    	(bd->file->filename(), bd->pageNo, frameNum);
+    }
+
     bufDescTable[frameNum].Clear();
     hashTable->remove(file, PageNo);  
   } 
