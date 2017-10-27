@@ -195,6 +195,10 @@ class BufMgr
 	 *
 	 * @param frame   	Frame reference, frame ID of allocated frame returned via this variable
 	 * @throws BufferExceededException If no such buffer is found which can be allocated
+   *
+   * When allocating a free frame dirty pages are written to disk. 
+   * If the frame to be allocated has a valid page in it, the page is removed
+   * from the appropriate entry in the hash table.
 	 */
   void allocBuf(FrameId & frame);
 
@@ -211,13 +215,16 @@ class BufMgr
 	
 	/**
    * Destructor of BufMgr class
+   *
+   * Calling flushes all dirty pages, deallocates buffer pool and BufDesc table
 	 */
   ~BufMgr();
 
 	/**
 	 * Reads the given page from the file into a frame and returns the pointer to page.
 	 * If the requested page is already present in the buffer pool pointer to that frame is returned
-	 * otherwise a new frame is allocated from the buffer pool for reading the page.
+	 * otherwise a new frame is allocated from the buffer pool for reading the page. An entry is inserted into the 
+  * hash table and pin count is one and reference bit is set to true.
 	 *
 	 * @param file   	File object
 	 * @param PageNo  Page number in the file to be read
@@ -228,6 +235,9 @@ class BufMgr
 	/**
 	 * Unpin a page from memory since it is no longer required for it to remain in memory.
 	 *
+   * Decrements the pin count of the frame containing (file, PageNo) and, if
+   * the page is dirty as, sets the dirty bit in buffer description.
+   *
 	 * @param file   	File object
 	 * @param PageNo  Page number
 	 * @param dirty		True if the page to be unpinned needs to be marked dirty	
@@ -238,6 +248,10 @@ class BufMgr
 	/**
 	 * Allocates a new, empty page in the file and returns the Page object.
 	 * The newly allocated page is also assigned a frame in the buffer pool.
+   * This frame is inserted into the hash table and Set() is invoked on the frame to set it up properly. 
+   * The method returns both the page number of the newly allocated page to the 
+   * caller via the pageNo parameter and a pointer to the buffer frame allocated
+   * for the page via the page parameter
 	 *
 	 * @param file   	File object
 	 * @param PageNo  Page number. The number assigned to the page in the file is returned via this reference.
@@ -258,8 +272,9 @@ class BufMgr
 
 	/**
 	 * Delete page from file and also from buffer pool if present.
+   * The buffer pool frame is freed and correspondingly entry from hash table is also removed.
 	 * Since the page is entirely deleted from file, its unnecessary to see if the page is dirty.
-	 *
+	 * 
 	 * @param file   	File object
 	 * @param PageNo  Page number
 	 */
