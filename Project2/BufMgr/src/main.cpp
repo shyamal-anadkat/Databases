@@ -1,8 +1,8 @@
 /**
  * @author Shyamal Anadkat (9071804893)
  * @author Bryce Sprecher (9061820008)
- * @author 
- * 
+ * @author Avichal Rakesh (9072949259)
+ *
  * This is the main class of the database manager. It instatiaes our
  * database and buffer classes. It tests the functionality of the DB.
  *

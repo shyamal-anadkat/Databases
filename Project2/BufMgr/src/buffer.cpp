@@ -1,14 +1,14 @@
 /**
  * @author Shyamal Anadkat (9071804893)
  * @author Bryce Sprecher (9061820008)
- * @author 
- * 
- * This serves as the buffer pool management class in this database. 
- * 
+ * @author Avichal Rakesh (9072949259)
+ *
+ * This serves as the buffer pool management class in this database.
+ *
  * Page usage is tracked via pin counts. Reading, allocating and
  * and disposal of buffer pool pages is handled by this class.
  * It implements a clock replacement policy.
- *  
+ *
  */
 
 #include <memory>
@@ -49,12 +49,12 @@ BufMgr::~BufMgr()
   // WB all dirty pages (iterate)
   for(FrameId i = 0; i < numBufs; i++) {
       if(bufDescTable[i].dirty && bufDescTable[i].valid) {
-        bufDescTable[i].file -> 
+        bufDescTable[i].file ->
         writePage(bufPool[i]);
         bufDescTable[i].dirty = false;
       }
   }
-  
+
   delete[] bufPool;
   delete[] bufDescTable;
   delete hashTable;
@@ -72,22 +72,22 @@ void BufMgr::allocBuf(FrameId& frame)
 
   bool found = false;
 
-  do 
+  do
   {
     BufDesc* frame_info = &bufDescTable[clockHand];
 
-    if (!frame_info->valid) 
+    if (!frame_info->valid)
     {
       found = true; // found what? a free frame?
       frame = clockHand;
-    } 
+    }
     // if current frame is already pinned increment pincount, why?
-    else if (frame_info->pinCnt) 
+    else if (frame_info->pinCnt)
     {
       numPinned++;
       advanceClock();
-    } 
-    else if (frame_info->refbit) 
+    }
+    else if (frame_info->refbit)
     {
       frame_info->refbit = 0;
       advanceClock();
@@ -95,8 +95,8 @@ void BufMgr::allocBuf(FrameId& frame)
     else // case of valid frame be written to disk, why not check this first?
     {
       hashTable->remove(frame_info->file, frame_info->pageNo);
-      
-      if (frame_info->dirty) 
+
+      if (frame_info->dirty)
       {
         frame_info->file->writePage(bufPool[clockHand]);
       }
@@ -108,7 +108,7 @@ void BufMgr::allocBuf(FrameId& frame)
 
   // If all buffer frames are pinned throw exception
   // SHOULD this be first before the do loop?
-  if (numPinned == numBufs) 
+  if (numPinned == numBufs)
   {
     throw BufferExceededException();
   }
@@ -119,38 +119,38 @@ void BufMgr::allocBuf(FrameId& frame)
 void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 {
   // Case 2: Page is present in buffer pool
-  try 
+  try
   {
     FrameId read_target_frame_number;
-    
+
     // if present in hashTable read_target_frame_number gets frame number
     // otherwise a HashNotFoundException will be thrown
     hashTable->lookup(file, pageNo, read_target_frame_number);
-    
+
     // set refBit to true because this page is being referenced
-    bufDescTable[read_target_frame_number].refbit = true; 
-    
+    bufDescTable[read_target_frame_number].refbit = true;
+
     // increment pinCount because page is being read
     bufDescTable[read_target_frame_number].pinCnt++;
-    
+
     // return pointer to frame where page is stored
     page = &bufPool[read_target_frame_number];
   }
   // Case 1: Page is not in buffer pool
-  catch (HashNotFoundException& hnfe) 
+  catch (HashNotFoundException& hnfe)
   {
     // New frame allocated from buffer pool and page stored in new frame
     FrameId read_target_frame_number;
-    allocBuf(read_target_frame_number);    
+    allocBuf(read_target_frame_number);
     bufPool[read_target_frame_number] = file->readPage(pageNo);
-    
+
     // Instert frame into hashTable
     hashTable->insert(file, pageNo, read_target_frame_number);
     bufDescTable[read_target_frame_number].Set(file, pageNo);
-    
+
     // return pointer to frame where page is stored
     page = &bufPool[read_target_frame_number];
-    
+
     // HashTableException (optional) ?
   }
 }
@@ -159,7 +159,7 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
     FrameId unpinned_frame_number;
 
-  try 
+  try
   {
     hashTable->lookup(file, pageNo, unpinned_frame_number);
 
@@ -173,17 +173,17 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
     bufDescTable[unpinned_frame_number].pinCnt--;
 
     // WHY is the refbit true only if new pinCnt = 0? why not <= 0?
-    if (bufDescTable[unpinned_frame_number].pinCnt == 0) 
+    if (bufDescTable[unpinned_frame_number].pinCnt == 0)
     {
       bufDescTable[unpinned_frame_number].refbit = true;
     }
 
-    if (dirty) 
+    if (dirty)
     {
       bufDescTable[unpinned_frame_number].dirty = true;
     }
   }
-  catch (HashNotFoundException hnfe) 
+  catch (HashNotFoundException hnfe)
   {
     // No corresponding frame found.
     // do nothing
@@ -206,21 +206,21 @@ void BufMgr::allocPage(File *file, PageId& pageNo, Page *& page)
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
 {
-  try 
+  try
   {
     FrameId frameNum;
     hashTable->lookup(file, PageNo, frameNum);
     BufDesc *bd = &bufDescTable[frameNum];
-    
+
     if(bufDescTable[frameNum].pinCnt != 0) {
       throw PagePinnedException
       (bd->file->filename(), bd->pageNo, frameNum);
     }
 
     bufDescTable[frameNum].Clear();
-    hashTable->remove(file, PageNo);  
-  } 
-  catch (HashNotFoundException e) 
+    hashTable->remove(file, PageNo);
+  }
+  catch (HashNotFoundException e)
   {
     // Page not in the buffer.
     // Nothing more to be done to the buffer.
@@ -235,7 +235,7 @@ void BufMgr::flushFile(const File *file)
   for (FrameId i = 0; i < numBufs; i++)
   {
     BufDesc *bd = &bufDescTable[i];
-    
+
     if ((bd->file) == file)
     {
       if (bd->pinCnt > 0)
