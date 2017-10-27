@@ -5,7 +5,6 @@
  * Copyright (c) 2012 Database Group, Computer Sciences Department, University
  * of Wisconsin-Madison.
  * 
-
  */
 
 /**
@@ -66,7 +65,7 @@ void BufMgr::advanceClock()
 }
 
 /**
- * \brief Allocates a free frame
+ * @brief Allocates a free frame
  *
  * @param frame - address of the FrameID to be allocated ?
  * @throws BufferExceededException if all buffer frames are pinned
@@ -125,18 +124,24 @@ void BufMgr::allocBuf(FrameId& frame)
   frame = clockHand;
 }
 
-/*Firstcheckwhetherthepageisalreadyinthebufferpoolbyinvokingthelookup()method,
-which may throw HashNotFoundException when page is not in the buffer pool, on the
-hashtable to get a frame number. There are two cases to be handled depending on the
-outcome of the lookup() call:
-• Case 1: Page is not in the buffer pool. Call allocBuf() to allocate a buffer frame and
-then call the method file->readPage() to read the page from disk into the buffer pool
-frame. Next, insert the page into the hashtable. Finally, invoke Set() on the frame to
-set it up properly. Set() will leave the pinCnt for the page set to 1. Return a pointer
-to the frame containing the page via the page parameter.
-• Case 2: Page is in the buffer pool. In this case set the appropriate refbit, increment
-the pinCnt for the page, and then return a pointer to the frame containing the page
-via the page parameter*/
+/**
+ * @brief Attempts to read a page in the buffer
+ *
+ * Calling this method will attempt to read a page in the buffer pool, this will
+ * throw HashNotFoundException when page is not in the buffer pool
+ *
+ * If the page is present pin count is incremented and reference bit is set to
+ * true. (Case 2)
+ *
+ * If page is not present in buffer pool a frame will be allocated, the page 
+ * will be read from disk to the buffer frame. An entry is inserted into the 
+ * hash table and pin count is one and reference bit is set to true. (Case 1)
+ *
+ * @param
+ * @param
+ * @param
+ * @returns a pointer to the frame containing the page via the page parameter
+ */
 void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 {
   // Case 2: Page is present in buffer pool
@@ -145,6 +150,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
     FrameId read_target_frame_number;
     
     // if present in hashTable read_target_frame_number gets frame number
+    // otherwise a HashNotFoundException will be thrown
     hashTable->lookup(file, pageNo, read_target_frame_number);
     
     // set refBit to true because this page is being referenced
@@ -176,11 +182,16 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 }
 
 /** 
-  * Decrements the pinCnt of the frame containing (file, PageNo) and, if
-  * dirty == true, sets the dirty bit.
-  * Throws PAGENOTPINNED if the pin count is already 0. Does
-  * nothing if
+  * @brief Unpins a page and updates dirty bit
+  *
+  * Decrements the pin count of the frame containing (file, PageNo) and, if
+  * the page is dirty as, sets the dirty bit in buffer description.
+  * 
+  * @throws PAGENOTPINNED if the pin count is already 0. Does nothing if
   * page is not found in the hash table lookup
+  * @param
+  * @param
+  * @param
   */   
 void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
@@ -190,7 +201,7 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
   {
     hashTable->lookup(file, pageNo, unpinned_frame_number);
 
-    // Page already has no pins
+    // Page has no pins, throw exception
     if (bufDescTable[unpinned_frame_number].pinCnt == 0)
     {
       throw PageNotPinnedException(file->filename(), pageNo, unpinned_frame_number);
@@ -212,23 +223,27 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
   }
   catch (HashNotFoundException hnfe) 
   {
-        // No corresponding frame found.
-        // do nothing
+    // No corresponding frame found.
+    // do nothing
   }
 }
 
 
 /**
-* The first step in this method is to to allocate an empty page in the specified file by in-
-* voking the file->allocatePage() method. This method will return a newly allocated page.
-* Then allocBuf() is called to obtain a buffer pool frame. Next, an entry is inserted into the
-* hash table and Set() is invoked on the frame to set it up properly. The method returns
-* both the page number of the newly allocated page to the caller via the pageNo parameter
-* and a pointer to the buffer frame allocated for the page via the page parameter
+* @brief Allocates an empty page in a given file and adds it to the buffer pool
+*
+* Allocate an empty page in the specified file. This gives a newly allocated 
+* page. Then allocBuf() is obtains a buffer pool frame. This frame is inserted 
+* into the hash table and Set() is invoked on the frame to set it up properly. 
+* The method returns both the page number of the newly allocated page to the 
+* caller via the pageNo parameter and a pointer to the buffer frame allocated
+* for the page via the page parameter
 *
 * @param file File obj
 * @param pageNo Page Number
 * @page  ref to page pointer
+* @returns pageNo page number of the newly allocated page
+* @returns page a pointer to the buffer frame allocated for the page
 */
 void BufMgr::allocPage(File *file, PageId& pageNo, Page *& page)
 {
@@ -262,8 +277,8 @@ void BufMgr::disposePage(File *file, const PageId PageNo)
     BufDesc *bd = &bufDescTable[frameNum];
     
     if(bufDescTable[frameNum].pinCnt != 0) {
-    	throw PagePinnedException
-    	(bd->file->filename(), bd->pageNo, frameNum);
+      throw PagePinnedException
+      (bd->file->filename(), bd->pageNo, frameNum);
     }
 
     bufDescTable[frameNum].Clear();
