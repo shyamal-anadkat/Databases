@@ -49,7 +49,16 @@ BufMgr::BufMgr(std::uint32_t bufs) : numBufs(bufs)
 
 BufMgr::~BufMgr()
 {
-  // TODO: flush all dirty pages (iterate)
+  // WB all dirty pages (iterate)
+  for(FrameId i = 0; i < numBufs; i++) {
+  		if(bufDescTable[i].dirty && bufDescTable[i].valid) {
+  			bufDescTable[i].file -> 
+  			writePage(bufPool[i]);
+  			bufDescTable[i].dirty = false;
+  		}
+  }
+  
+
   delete[] bufPool;
   delete[] bufDescTable;
   delete hashTable;
