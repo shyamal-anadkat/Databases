@@ -65,6 +65,7 @@ void BufMgr::advanceClock()
 
 void BufMgr::allocBuf(FrameId& frame)
 {
+  // Used to store the number of currently pinned frames in the buffer
   std::uint32_t numPinned = 0;
 
   bool found = false;
@@ -75,10 +76,9 @@ void BufMgr::allocBuf(FrameId& frame)
 
     if (!frame_info->valid)
     {
-      found = true; // found what? a free frame?
+      found = true;
       frame = clockHand;
     }
-    // if current frame is already pinned increment pincount, why?
     else if (frame_info->pinCnt)
     {
       numPinned++;
@@ -89,7 +89,7 @@ void BufMgr::allocBuf(FrameId& frame)
       frame_info->refbit = 0;
       advanceClock();
     }
-    else // case of valid frame be written to disk, why not check this first?
+    else // case of valid frame be written to disk
     {
       hashTable->remove(frame_info->file, frame_info->pageNo);
 
