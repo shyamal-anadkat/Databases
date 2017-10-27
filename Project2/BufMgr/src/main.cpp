@@ -1,3 +1,14 @@
+/**
+ * @author Shyamal Anadkat (9071804893)
+ * @author Bryce Sprecher (9061820008)
+ * @author 
+ * 
+ * This is the main class of the database manager. It instatiaes our
+ * database and buffer classes. It tests the functionality of the DB.
+ *
+ */
+
+
 #include <iostream>
 #include <stdlib.h>
 //#include <stdio.h>
