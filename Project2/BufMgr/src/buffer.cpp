@@ -1,7 +1,7 @@
 /**
+ * @author Avichal Rakesh (9072949259)
  * @author Shyamal Anadkat (9071804893)
  * @author Bryce Sprecher (9061820008)
- * @author Avichal Rakesh (9072949259)
  *
  * This serves as the buffer pool management class in this database.
  *
@@ -39,20 +39,17 @@ BufMgr::BufMgr(std::uint32_t bufs) : numBufs(bufs)
   clockHand = bufs - 1;
 }
 
-/**
- * Calling flushes all dirty pages, deallocates buffer pool and BufDesc table
- */
-
 BufMgr::~BufMgr()
 {
-
-  // WB all dirty pages (iterate)
-  for(FrameId i = 0; i < numBufs; i++) {
-      if(bufDescTable[i].dirty && bufDescTable[i].valid) {
-        bufDescTable[i].file ->
-        writePage(bufPool[i]);
-        bufDescTable[i].dirty = false;
-      }
+  // Write back all dirty pages that are also valid
+  for (FrameId i = 0; i < numBufs; i++) 
+  {
+    if(bufDescTable[i].dirty && bufDescTable[i].valid) 
+    {
+      bufDescTable[i].file ->
+      writePage(bufPool[i]);
+      bufDescTable[i].dirty = false;
+    }
   }
 
   delete[] bufPool;
@@ -107,7 +104,6 @@ void BufMgr::allocBuf(FrameId& frame)
   }while (!found && numPinned < numBufs);
 
   // If all buffer frames are pinned throw exception
-  // SHOULD this be first before the do loop?
   if (numPinned == numBufs)
   {
     throw BufferExceededException();
@@ -157,7 +153,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *& page)
 
 void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
-    FrameId unpinned_frame_number;
+  FrameId unpinned_frame_number;
 
   try
   {
@@ -192,31 +188,37 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 
 void BufMgr::allocPage(File *file, PageId& pageNo, Page *& page)
 {
-  // std::cout << "Here 3\n";
+  //Create a new page assigining it a page number
   Page *new_page = new Page();
   *new_page = file->allocatePage();
   pageNo = new_page->page_number();
+  
+  //Allocate frame and add page to hashTable
   FrameId id;
-
   allocBuf(id);
   hashTable->insert(file, pageNo, id);
   bufDescTable[id].Set(file, pageNo);
-  bufPool[id] = *new_page;    page = &bufPool[id];
+  bufPool[id] = *new_page;    
+  page = &bufPool[id];
 }
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
 {
   try
   {
+    //Locate frame the page is in through hashTable
     FrameId frameNum;
     hashTable->lookup(file, PageNo, frameNum);
-    BufDesc *bd = &bufDescTable[frameNum];
+    BufDesc* target_frame_desc = &bufDescTable[frameNum];
 
-    if(bufDescTable[frameNum].pinCnt != 0) {
+    //If frame is in use, ie pinned, can't dispose
+    if(bufDescTable[frameNum].pinCnt != 0) 
+    {
       throw PagePinnedException
-      (bd->file->filename(), bd->pageNo, frameNum);
+      (target_frame_desc->file->filename(), target_frame_desc->pageNo, frameNum);
     }
 
+    //Remove frame description from table and hashTable
     bufDescTable[frameNum].Clear();
     hashTable->remove(file, PageNo);
   }
@@ -234,25 +236,30 @@ void BufMgr::flushFile(const File *file)
 {
   for (FrameId i = 0; i < numBufs; i++)
   {
-    BufDesc *bd = &bufDescTable[i];
+    BufDesc* target_frame = &bufDescTable[i];
 
-    if ((bd->file) == file)
+    // Any buffer frame with a page from this file must be freed and flushed
+    if ((target_frame->file) == file)
     {
-      if (bd->pinCnt > 0)
+      //File in use if pinned
+      if (target_frame->pinCnt > 0)
       {
-        throw PagePinnedException(bd->file->filename(), bd->pageNo, i);
+        throw PagePinnedException(target_frame->file->filename(), target_frame->pageNo, i);
       }
-      if (!bd->valid)
+      //File only candidated to be flushed if valid
+      if (!target_frame->valid)
       {
-        throw BadBufferException(i, bd->dirty, false, bd->refbit);
+        throw BadBufferException(i, target_frame->dirty, false, target_frame->refbit);
       }
-      if (bd->dirty)
+      //Only frames that are dirty need to be written to disk
+      if (target_frame->dirty)
       {
-        bd->file->writePage(bufPool[i]);
+        target_frame->file->writePage(bufPool[i]);
       }
 
-      hashTable->remove(bd->file, bd->pageNo);
-      bd->Clear();
+      //Any frame belonging to the file is removed from hashTable and cleared
+      hashTable->remove(target_frame->file, target_frame->pageNo);
+      target_frame->Clear();
     }
   }
 }
