@@ -1,17 +1,14 @@
 /**
- * @author See Contributors.txt for code contributors and overview of BadgerDB.
- *
- * @section LICENSE
- * Copyright (c) 2012 Database Group, Computer Sciences Department, University
- * of Wisconsin-Madison.
+ * @author Shyamal Anadkat (9071804893)
+ * @author Bryce Sprecher (9061820008)
+ * @author 
  * 
- */
-
-/**
- * The code should be well-documented, using Doxygen style comments. Each file should start with
- * your name and student id, and should explain the purpose of the file. Each function
- * should be preceded by a few lines of comments describing the function and explaining
- * the input and output parameters and return values.
+ * This serves as the buffer pool management class in this database. 
+ * 
+ * Page usage is tracked via pin counts. Reading, allocating and
+ * and disposal of buffer pool pages is handled by this class.
+ * It implements a clock replacement policy.
+ *  
  */
 
 #include <memory>
