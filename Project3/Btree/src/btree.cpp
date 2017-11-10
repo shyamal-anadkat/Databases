@@ -42,6 +42,10 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 BTreeIndex::~BTreeIndex()
 {
+	// flushing the index file
+	bufMgr->flushFile(file);
+	// descructor of file class called
+	file->~File();
 }
 
 // -----------------------------------------------------------------------------
