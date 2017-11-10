@@ -80,6 +80,10 @@ const void BTreeIndex::startScan(const void* lowValParm,
 const void BTreeIndex::scanNext(RecordId& outRid) 
 {
 
+	if (!scanExecuting) {
+			throw ScanNotInitializedException();	
+	}
+
 }
 
 // -----------------------------------------------------------------------------
@@ -88,6 +92,9 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 //
 const void BTreeIndex::endScan() 
 {
+	if (!scanExecuting) {
+			throw ScanNotInitializedException();	
+	}
 
 }
 
