@@ -52,6 +52,10 @@ BTreeIndex::~BTreeIndex()
 // BTreeIndex::insertEntry
 // -----------------------------------------------------------------------------
 
+// This method inserts a new entry into the index using the pair <key, rid>
+// const void* key A pointer to the value (integer) we want to insert.
+// const RecordId& rid The corresponding record id of the tuple in the base relation
+
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
 
