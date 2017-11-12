@@ -33,7 +33,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 		const Datatype attrType)
 {
 
-	// init fields for Btree
+	//// init fields for Btree ////
 	this->bufMgr = bufMgrIn; //bufManager instance
 	this->leafOccupancy = INTARRAYLEAFSIZE;
 	this->nodeOccupancy = INTARRAYNONLEAFSIZE;
@@ -42,34 +42,34 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 	this->attrByteOffset = attrByteOffset;
 	this->scanExecuting = false;
 
-	// constructing index file name 
+	//// constructing index file name ////
 	std::ostringstream idxStr;
 	idxStr << relationName << '.' << attrByteOffset;
 	std::string indexName = idxStr.str(); //indexName : name of index file created
 
-	// return the name of index file after determining it above
+	//// return the name of index file after determining it above ////
 	outIndexName = indexName;
 
-	// debug checks
+	//// debug checks ////
 	std::cout << "Index File Name: " << indexName << std::endl;
 
 
-	// if index file exists, open the file
+	//// if index file exists, open the file ////
 	 
 	if(File::exists(outIndexName)) {
 
-		// open file if exists 
+		//// open file if exists ////
 		this->file = new BlobFile(outIndexName, false);
 		
-		// get meta page info (always the first page)
+		//// get meta page info (always the first page) ////
 		Page *metaPage;
 		this->headerPageNum = file->getFirstPageNo();
 		this->bufMgr->readPage(this->file, headerPageNum, metaPage);
 
-		// cast meta page to IndexMetaInfo structure
+		//// cast meta page to IndexMetaInfo structure ////
 		IndexMetaInfo * indexMetaInfo = (IndexMetaInfo *)metaPage;
 		
-		// unpin the header page, as we don't use it after constructor 
+		//// unpin the header page, as we don't use it after constructor ////
 		this->bufMgr->unPinPage(this->file, headerPageNum, false);
 
 		//// VALIDATION CHECK ////
@@ -84,7 +84,8 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 			throw BadIndexInfoException("Error: Index meta attributes don't match!");
 		}
-		// page number of root page of B+ tree inside index file.
+
+		//// page number of root page of B+ tree inside index file. ////
 		this->rootPageNum = indexMetaInfo->rootPageNo;
 	}
 
@@ -92,7 +93,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 		std::cout << "Creating index file ...\n";
 
-		// create index file if doesn't exist + meta pg + root pg
+		//// create index file if doesn't exist + meta pg + root pg ////
 		this->file = new BlobFile(outIndexName, true);
 		Page* indexMetaInfoPage;
 
@@ -110,11 +111,11 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 		metaInfo->rootPageNo = this->rootPageNum = 2; // Root page starts as page 2
 		root->level = 1;
 
-		// unpin headerPage and rootPage
+		//// unpin headerPage and rootPage ////
 		bufMgr->unPinPage(file, headerPageNum, true);
 		bufMgr->unPinPage(file, rootPageNum,   true);
 
-		//insert entries for every tuple in the base relation using FileScan class.
+		//   insert entries for every tuple in the base relation using FileScan class. ////
 		RecordId curr_rid;
 		FileScan * fs = new FileScan(relationName, bufMgr);
 		try {
@@ -139,10 +140,13 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 BTreeIndex::~BTreeIndex()
 {
-	// flushing the index file
+	//// flushing the index file ////
 	bufMgr->flushFile(file);
-	// destructor of file class called
+
+	//// destructor of file class called ////
 	file->~File();
+
+	//// del file and bufMgr instance ////
 	delete file;
 	delete bufMgr;
 }
@@ -155,8 +159,20 @@ BTreeIndex::~BTreeIndex()
 // const void* key A pointer to the value (integer) we want to insert.
 // const RecordId& rid The corresponding record id of the tuple in the base relation
 
+/**
+* Insert a new entry using the pair <value,rid>. 
+* Start from root to recursively find out the leaf to insert the entry in. 
+* The insertion may cause splitting of leaf node.
+* This splitting will require addition of new leaf page number entry into the parent non-leaf, 
+* which may in-turn get split.
+* This may continue all the way upto the root causing the root to get split. 
+* If root gets split, metapage needs to be changed accordingly.
+* Make sure to unpin pages as soon as you can.
+**/
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
+
+
 
 }
 
@@ -176,6 +192,15 @@ const void BTreeIndex::startScan(const void* lowValParm,
 // BTreeIndex::scanNext
 // -----------------------------------------------------------------------------
 
+/**
+* Fetch the record id of the next index entry that matches the scan.
+* Return the next record from current page being scanned. 
+* If current page has been scanned to its entirety, move on to the right sibling of current page, 
+* if any exists, to start scanning that page. Make sure to unpin any pages that are no longer required.
+* @param outRid	RecordId of next record found that satisfies the scan criteria returned in this
+* @throws ScanNotInitializedException If no scan has been initialized.
+* @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
+**/
 const void BTreeIndex::scanNext(RecordId& outRid) 
 {
 
@@ -191,9 +216,15 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 //
 const void BTreeIndex::endScan() 
 {
+	//@TODO
+	//Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
+	//@throws ScanNotInitializedException If no scan has been initialized.
+
 	if (!scanExecuting) {
 			throw ScanNotInitializedException();	
 	}
+
+	scanExecuting = false;
 
 }
 
