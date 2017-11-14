@@ -225,7 +225,8 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	PageID index_root_pageID = rootPageNum;
 	Page current_page = file.readPage(index_root_pageID);
 	Page* current_page_pointer = &current_page;
-	
+	NonLeafNodeInt* current_node_pointer = current_page_pointer;
+
 
 
 }
