@@ -185,6 +185,48 @@ const void BTreeIndex::startScan(const void* lowValParm,
 				   const void* highValParm,
 				   const Operator highOpParm)
 {
+	// I'm not quite sure of all the functionality of this method. The pdf seems to
+	// imply that this sets global variables and then calls the scan next method
+	// I don't see why the use of global variables is even necessary as this function
+	// could store the state of the scan in member variables
+
+	// First use iterative traversal to find the leftmost node that could point to 
+	// values in the parameter range. this is done by using the lower bounds
+	// and the given operator either GT or GTE and comparing to the value in the
+	// non leaf key array. If it fails go onto the next index entry, otherwise
+	// find the child node. If the current node has level = 1 that means the child
+	// is a leaf, otherwise it's another non leaf
+
+	// Range sanity check
+	if (lowValParm > highValParm) throw BadScanrangeException();
+
+	// Stop any current scans, might need to do more here
+	if (scanExecuting) endScan();
+
+	// Set up global vars
+	scanExecuting = true;
+	
+	lowValInt = lowValParm;
+	highValInt = highValParm;
+	lowOp = lowOpParm;
+	highOp = highOpParm;
+
+	//Index of next entry in current leaf to be scanned
+	nextEntry = ???;
+	// Current page number
+	currentPageNum = ???;
+	// Current page pointer
+	currentPageData = ???;
+
+	// Start at the root node of the B+ index to traverse for key values
+	// Each non leaf node has an array of key values, and associated child nodes
+	// The nodes are pages, and once I have the page I can cast the pointer to 
+	// a struct pointer to get the datamembers?
+	PageID index_root_pageID = rootPageNum;
+	Page current_page = file.readPage(index_root_pageID);
+	Page* current_page_pointer = &current_page;
+	
+
 
 }
 
