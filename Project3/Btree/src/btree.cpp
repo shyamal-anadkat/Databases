@@ -282,6 +282,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			}			
 			// All the key values have been compared and the lower bound is larger
 			// than all of them, thus we take the rightmost child of the node
+			// Though this might be different if the nodes aren't fully occupied!
 			else if (i == nodeOccupancy)
 			{
 				//is this bad form, to have 1 offset here?
