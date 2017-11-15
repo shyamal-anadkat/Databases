@@ -221,19 +221,27 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	// non leaf key array. If it fails go onto the next index entry, otherwise
 	// find the child node. If the current node has level = 1 that means the child
 	// is a leaf, otherwise it's another non leaf
+
+	// Okay, I think I have a better idea of what's going on in this function.
+	// It doesn't actually call the scanNext function, it's only finding the first
+	// node that matches the criteria and setting up the gloabal vars that 
+	// scanNext will use to return the recordIDs, an external call to scanNext()
+	// will be made when needed.
 	
 	////  Range sanity check ////
+	// The range parameters are void pointers, so they must first be cast to
+	// integer pointers and then dereferenced to get the actual values.
 	if (*(int*)lowValParm > *(int*)highValParm) throw BadScanrangeException();
 
+	// Opcode check
 	if (lowOpParm  != GT  && lowOpParm != GTE) { throw BadOpcodesException(); }
-
 	if (highOpParm != LT &&  lowOpParm != LTE) { throw BadOpcodesException(); }
 
 
 	// Stop any current scans, might need to do more here
 	if (scanExecuting) { endScan(); }
 
-	// Set up global vars
+	// Set up global vars for the scan constraints
 	scanExecuting = true;
 	
 	lowValInt  = *(int*) lowValParm;
@@ -241,23 +249,61 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	lowOp = lowOpParm;
 	highOp = highOpParm;
 
-	//NOW EXECUTE SCAN
+	// Start at the root node of the B+ index to traverse for key values
+	// Each non leaf node has an array of key values, and associated child nodes
+	// The nodes are pages, and once I have the page I can cast the pointer to 
+	// a struct pointer to get the datamembers?
+	
+	// Start by getting the root page number, get it's page, make a pointer
+	// to that page address and then cast it to the NonLeafNodeInt struct pointer
+	PageID index_root_pageID = rootPageNum;
+	Page current_page = file.readPage(index_root_pageID);
+	Page* current_page_pointer = &current_page;
+	struct NonLeafNodeInt* cur_node_ptr = (struct NonLeafNodeInt*)current_page_pointer;
 
+	// Traverse the tree until the level = 1, this is the last level before leafs
+	while (cur_node_ptr->level != 1)
+	{
+		bool found_range = false;
+		// Find the leftmost non leaf child with key values matching the search,
+		for (int i = 0, i++, i<nodeOccupancy && !found_range)
+		{
+			int key_value = cur_node_ptr->keyArray[i];
+			// There might be issue with 0 key values
+			// Since the lower bound must be contained in the child that defines
+			// a range larger than it if the current key is larger than the lower
+			// bound we will find the value in the corresponding child index
+			if (lowValInt < key_value)
+			{
+				PageID min_pageID = cur_node_ptr->pageNoArray[i];	
+				Page min_page = file.readPage(min_pageID);
+				Page* min_page_ptr = &min_page;
+				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
+			}			
+			// All the key values have been compared and the lower bound is larger
+			// than all of them, thus we take the rightmost child of the node
+			// Though this might be different if the nodes aren't fully occupied!
+			else if (i == nodeOccupancy)
+			{
+				//is this bad form, to have 1 offset here?
+				PageID min_pageID = cur_node_ptr->pageNoArray[i + 1];	
+				Page min_page = file.readPage(min_pageID);
+				Page* min_page_ptr = &min_page;
+				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
+			}
+		}
+	}
+	// Once the first matching node is found then the rest of the scan
+	// related global variables can be setup, this is also where the distinction
+	// between the GTE vs GT might come into play, though it might be in the
+	// scan next method that we worry about that
+	
 	// Index of next entry in current leaf to be scanned
 	// nextEntry = ???;
 	// Current page number
 	// currentPageNum = ???;
 	// Current page pointer
 	// currentPageData = ???;
-
-	// Start at the root node of the B+ index to traverse for key values
-	// Each non leaf node has an array of key values, and associated child nodes
-	// The nodes are pages, and once I have the page I can cast the pointer to 
-	// a struct pointer to get the datamembers?
-	//PageID index_root_pageID = rootPageNum;
-	//Page current_page = file.readPage(index_root_pageID);
-	//Page* current_page_pointer = &current_page;
-	//NonLeafNodeInt* current_node_pointer = current_page_pointer;
 
 }
 
