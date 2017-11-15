@@ -176,6 +176,31 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
 
 }
 
+
+const void BTreeIndex::insertLeafEntry(LeafNodeInt * leafNode, RIDKeyPair<int> kpEntry) {
+
+	// find the pos in the node to insert 
+	int pos = 0; 
+	int idx = 0;
+	while( (pos < leafOccupancy) && (leafNode->ridArray[pos].page_number != 0)) {
+		if(leafNode->keyArray[pos] >= kpEntry.key) {
+			break;
+		}
+
+		pos++;
+	}
+
+	// shift other entries to right
+	for(idx = leafOccupancy-1; idx > pos; idx--) {
+		leafNode->ridArray[idx] = leafNode->ridArray[idx-1];
+		leafNode->keyArray[idx] = leafNode->keyArray[idx-1];
+	}
+
+	// insert given entry at pos
+	leafNode->keyArray[idx] = kpEntry.key;
+	leafNode->ridArray[idx] = kpEntry.rid;
+}
+
 // -----------------------------------------------------------------------------
 // BTreeIndex::startScan
 // -----------------------------------------------------------------------------
@@ -196,7 +221,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	// non leaf key array. If it fails go onto the next index entry, otherwise
 	// find the child node. If the current node has level = 1 that means the child
 	// is a leaf, otherwise it's another non leaf
-
+	/*
 	// Range sanity check
 	if (lowValParm > highValParm) throw BadScanrangeException();
 
@@ -212,11 +237,11 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	highOp = highOpParm;
 
 	//Index of next entry in current leaf to be scanned
-	nextEntry = ???;
+	//nextEntry = ???;
 	// Current page number
-	currentPageNum = ???;
+	//currentPageNum = ???;
 	// Current page pointer
-	currentPageData = ???;
+	//currentPageData = ???;
 
 	// Start at the root node of the B+ index to traverse for key values
 	// Each non leaf node has an array of key values, and associated child nodes
@@ -227,7 +252,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	Page* current_page_pointer = &current_page;
 	NonLeafNodeInt* current_node_pointer = current_page_pointer;
 
-
+*/
 
 }
 

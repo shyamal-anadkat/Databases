@@ -331,6 +331,9 @@ class BTreeIndex {
 	const void insertEntry(const void* key, const RecordId rid);
 
 
+  const void insertLeafEntry(LeafNodeInt * leafNode, RIDKeyPair<int> kpEntry);
+
+
   /**
 	 * Begin a filtered scan of the index.  For instance, if the method is called 
 	 * using ("a",GT,"d",LTE) then we should seek all entries with a value 
