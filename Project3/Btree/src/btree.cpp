@@ -277,8 +277,54 @@ const void BTreeIndex::startScan(const void* lowValParm,
 const void BTreeIndex::scanNext(RecordId& outRid) 
 {
 
+	//This method fetches the record id of the next
+	//tuple that matches the scan criteria.
+	
 	if (!scanExecuting) {
 			throw ScanNotInitializedException();	
+	}
+
+	//if (this->currentPageNum == 0){
+	//	throw IndexScanCompletedException();
+	//}
+
+	LeafNodeInt* currentPageLeaf = (LeafNodeInt*) (this->currentPageData);
+
+	int currKey = currentPageLeaf->keyArray[nextEntry];
+
+	// go through records 
+	if((lowOp == GTE && currKey <  lowValInt) ||
+	   (lowOp == GT  && currKey <= lowValInt) ) 
+	{
+		outRid = currentPageLeaf->ridArray[nextEntry];
+		nextEntry++;
+	}
+
+	// if we reached limit
+	if( (highValInt  <= currKey && highOp == LT) ||
+		(highValInt   < currKey && highOp == LTE)) 
+	{
+		throw IndexScanCompletedException();
+
+	}
+
+	//move on to the right sibling when end of array
+	if(nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) {
+		
+		PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
+
+		if(nextSiblingPage == 0) throw IndexScanCompletedException();
+
+		// unpin page/node
+		
+		bufMgr->unPinPage(file, currentPageNum, false);
+		
+
+
+		this->nextEntry = 0;
+		this->currentPageNum = nextSiblingPage;
+		bufMgr->readPage(file, currentPageNum, currentPageData);
+		
 	}
 
 }
