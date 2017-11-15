@@ -256,7 +256,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	
 	// Start by getting the root page number, get it's page, make a pointer
 	// to that page address and then cast it to the NonLeafNodeInt struct pointer
-	PageID index_root_pageID = rootPageNum;
+	/*PageID index_root_pageID = rootPageNum;
 	Page current_page = file.readPage(index_root_pageID);
 	Page* current_page_pointer = &current_page;
 	struct NonLeafNodeInt* cur_node_ptr = (struct NonLeafNodeInt*)current_page_pointer;
@@ -292,7 +292,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
 			}
 		}
-	}
+	} */
 	// Once the first matching node is found then the rest of the scan
 	// related global variables can be setup, this is also where the distinction
 	// between the GTE vs GT might come into play, though it might be in the
@@ -330,47 +330,50 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 			throw ScanNotInitializedException();	
 	}
 
-	//if (this->currentPageNum == 0){
-	//	throw IndexScanCompletedException();
-	//}
-
-	LeafNodeInt* currentPageLeaf = (LeafNodeInt*) (this->currentPageData);
-
-	int currKey = currentPageLeaf->keyArray[nextEntry];
-
-	// go through records 
-	if((lowOp == GTE && currKey <  lowValInt) ||
-	   (lowOp == GT  && currKey <= lowValInt) ) 
-	{
-		outRid = currentPageLeaf->ridArray[nextEntry];
-		nextEntry++;
+	// should we include this here ?
+	if (this->currentPageNum == 0){
+		throw IndexScanCompletedException();
 	}
 
-	// if we reached limit
-	if( (highValInt  <= currKey && highOp == LT) ||
-		(highValInt   < currKey && highOp == LTE)) 
+	// get the current node/page being scanned as a leafNode
+	LeafNodeInt* currentPageLeaf = (LeafNodeInt*) (this->currentPageData);
+
+	// int key for next entry in the current scanned page
+	int currKey = currentPageLeaf->keyArray[nextEntry];
+
+	// if we reached limit, completed scan
+	if( (this->highValInt  <= currKey && highOp == LT) ||
+		(this->highValInt   < currKey && highOp == LTE)) 
 	{
 		throw IndexScanCompletedException();
 
 	}
 
+	// go through records, fetch the record id of the next index entry that matches the scan.
+	if((lowOp == GTE && currKey <  this->lowValInt) ||
+	   (lowOp == GT  && currKey <= this->lowValInt) ) 
+	{
+		outRid = currentPageLeaf->ridArray[nextEntry];
+		nextEntry++;
+	}
+
 	//move on to the right sibling when end of array
 	if(nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) {
 		
+		//get page id of right sibling
 		PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
 
 		if(nextSiblingPage == 0) throw IndexScanCompletedException();
 
-		// unpin page/node
-		
+		// unpin current page/node
 		bufMgr->unPinPage(file, currentPageNum, false);
-		
 
-
+		// reset next entry in node
 		this->nextEntry = 0;
+
+		// set current page num as sibling page & pin the page
 		this->currentPageNum = nextSiblingPage;
 		bufMgr->readPage(file, currentPageNum, currentPageData);
-		
 	}
 
 }
