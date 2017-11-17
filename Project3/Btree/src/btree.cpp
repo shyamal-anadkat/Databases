@@ -294,6 +294,8 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	// scanNext will use to return the recordIDs, an external call to scanNext()
 	// will be made when needed.
 	
+	// Be pinning pages!
+
 	////  Range sanity check ////
 	// The range parameters are void pointers, so they must first be cast to
 	// integer pointers and then dereferenced to get the actual values.
@@ -333,7 +335,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 		bool found_range = false;
 
 		// Find the leftmost non leaf child with key values matching the search,
-		for (int i = 0, i++, i<nodeOccupancy && !found_range)
+		for (int i = 0; i<nodeOccupancy && !found_range; i++)
 		{
 			int key_value = cur_node_ptr->keyArray[i];
 			// There might be issue with 0 key values
