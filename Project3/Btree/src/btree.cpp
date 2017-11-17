@@ -361,9 +361,9 @@ const void BTreeIndex::startScan(const void* lowValParm,
 		}
 	}
 	// Once the first matching node is found then the rest of the scan
-	related global variables can be setup, this is also where the distinction
-	between the GTE vs GT might come into play, though it might be in the
-	scan next method that we worry about that
+	//related global variables can be setup, this is also where the distinction
+	//between the GTE vs GT might come into play, though it might be in the
+	//scan next method that we worry about that
 	
 	// Index of next entry in current leaf to be scanned
 	// nextEntry = ???;
