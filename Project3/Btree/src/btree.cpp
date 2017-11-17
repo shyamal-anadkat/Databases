@@ -333,7 +333,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	Page* current_page_pointer = &current_page;
 	struct NonLeafNodeInt* cur_node_ptr = (struct NonLeafNodeInt*)current_page_pointer;
 
-	PageId min_pageID = null;
+	PageId min_pageID;
 
 	//Traverse the tree until the level = 1, this is the last level before leafs
 	while (cur_node_ptr->level != 1)
