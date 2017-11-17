@@ -11,6 +11,7 @@
 #include "exceptions/bad_opcodes_exception.h"
 #include "exceptions/bad_scanrange_exception.h"
 #include "exceptions/no_such_key_found_exception.h"
+#include "exceptions/page_not_pinned_exception.h"
 #include "exceptions/scan_not_initialized_exception.h"
 #include "exceptions/index_scan_completed_exception.h"
 #include "exceptions/file_not_found_exception.h"
@@ -468,6 +469,14 @@ const void BTreeIndex::endScan()
 	}
 
 	scanExecuting = false;
+
+	try {
+
+		bufMgr->unPinPage(this->file, this->currentPageNum, false);
+	}
+	
+	catch(PageNotPinnedException e) { } 
+
 
 }
 
