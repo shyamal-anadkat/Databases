@@ -291,6 +291,7 @@ class BTreeIndex {
    */
 	Operator	highOp;
 
+  bool rootIsLeaf;
 	
  public:
 
@@ -332,6 +333,10 @@ class BTreeIndex {
 
 
   const void insertLeafEntry(LeafNodeInt * leafNode, RIDKeyPair<int> kpEntry);
+
+  const void insertNonLeafEntry(NonLeafNodeInt * nonLeafNode, PageKeyPair<int> pkEntry);
+
+  const void insertRootEntry(RIDKeyPair<int> ridkeypair);
 
 
   /**

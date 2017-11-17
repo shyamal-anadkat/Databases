@@ -87,11 +87,14 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 		//// page number of root page of B+ tree inside index file. ////
 		this->rootPageNum = indexMetaInfo->rootPageNo;
+
+		rootIsLeaf = (rootPageNum == 2);
 	}
 
 	else {
 
 		std::cout << "Creating index file ...\n";
+		rootIsLeaf = true;
 
 		//// create index file if doesn't exist + meta pg + root pg ////
 		this->file = new BlobFile(outIndexName, true);
@@ -172,7 +175,70 @@ BTreeIndex::~BTreeIndex()
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) 
 {
 
+	RIDKeyPair<int> ridkey_entry;
+	ridkey_entry.set(rid, *(int *) key);
 
+	//if root is leaf, special case
+	if(this->rootIsLeaf) {
+
+		BTreeIndex::insertRootEntry(ridkey_entry);
+
+	} else {
+		//traverse and insert non-root
+
+		
+
+
+	}
+
+}
+
+
+const void BTreeIndex::insertRootEntry(RIDKeyPair<int> ridkeypair) {
+
+
+
+
+
+}
+
+
+const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt * nonLeafNode, PageKeyPair<int> pkEntry) {
+
+	int pos = 0; 
+	int idx = 0;
+
+	//find current pos in the page to insert 
+	while( (pos < nodeOccupancy) && (nonLeafNode->pageNoArray[pos] != 0) ) {
+		if(nonLeafNode->keyArray[pos] >= pkEntry.key) {
+			break; //found
+		}
+		pos++;
+	}
+
+	// shift other entries to right
+	for(idx = nodeOccupancy-1; idx > pos; idx--) {
+		nonLeafNode->pageNoArray[idx+1] = nonLeafNode->pageNoArray[idx];
+		nonLeafNode->keyArray[idx]    =   nonLeafNode->keyArray[idx-1];
+	}
+
+
+	int pageNoIdx = 0;
+	int keyIdx = 0;
+
+	if(nonLeafNode->pageNoArray[idx] == 0) {
+		// last position 
+		pageNoIdx = idx;
+		keyIdx    = idx - 1;
+	} else {
+		// on position
+		pageNoIdx = idx + 1;
+		keyIdx  = idx;
+	}
+
+	// insertion
+	nonLeafNode->pageNoArray[pageNoIdx] = pkEntry.pageNo;
+	nonLeafNode->keyArray[keyIdx] = pkEntry.key;
 
 }
 
