@@ -345,7 +345,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			if (lowValInt < key_value)
 			{
 				PageId min_pageID = cur_node_ptr->pageNoArray[i];	
-				Page min_page = file.readPage(min_pageID);
+				Page min_page = file->readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
 			}			
@@ -356,7 +356,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			{
 				//is this bad form, to have 1 offset here?
 				PageId min_pageID = cur_node_ptr->pageNoArray[i + 1];	
-				Page min_page = file.readPage(min_pageID);
+				Page min_page = file->readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
 			}
