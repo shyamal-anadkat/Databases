@@ -342,7 +342,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			// bound we will find the value in the corresponding child index
 			if (lowValInt < key_value)
 			{
-				PageID min_pageID = cur_node_ptr->pageNoArray[i];	
+				PageId min_pageID = cur_node_ptr->pageNoArray[i];	
 				Page min_page = file.readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
@@ -353,7 +353,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			else if (i == nodeOccupancy)
 			{
 				//is this bad form, to have 1 offset here?
-				PageID min_pageID = cur_node_ptr->pageNoArray[i + 1];	
+				PageId min_pageID = cur_node_ptr->pageNoArray[i + 1];	
 				Page min_page = file.readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
