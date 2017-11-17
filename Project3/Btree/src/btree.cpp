@@ -322,48 +322,48 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	
 	// Start by getting the root page number, get it's page, make a pointer
 	// to that page address and then cast it to the NonLeafNodeInt struct pointer
-	PageID index_root_pageID = rootPageNum;
+	PageId index_root_pageID = rootPageNum;
 	Page current_page = file->readPage(index_root_pageID);
 	Page* current_page_pointer = &current_page;
 	struct NonLeafNodeInt* cur_node_ptr = (struct NonLeafNodeInt*)current_page_pointer;
 
-	// Traverse the tree until the level = 1, this is the last level before leafs
-	// while (cur_node_ptr->level != 1)
-	// {
-	// 	bool found_range = false;
+	Traverse the tree until the level = 1, this is the last level before leafs
+	while (cur_node_ptr->level != 1)
+	{
+		bool found_range = false;
 
-	// 	// Find the leftmost non leaf child with key values matching the search,
-	// 	for (int i = 0, i++, i<nodeOccupancy && !found_range)
-	// 	{
-	// 		int key_value = cur_node_ptr->keyArray[i];
-	// 		// There might be issue with 0 key values
-	// 		// Since the lower bound must be contained in the child that defines
-	// 		// a range larger than it if the current key is larger than the lower
-	// 		// bound we will find the value in the corresponding child index
-	// 		if (lowValInt < key_value)
-	// 		{
-	// 			PageID min_pageID = cur_node_ptr->pageNoArray[i];	
-	// 			Page min_page = file.readPage(min_pageID);
-	// 			Page* min_page_ptr = &min_page;
-	// 			cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
-	// 		}			
-	// 		// All the key values have been compared and the lower bound is larger
-	// 		// than all of them, thus we take the rightmost child of the node
-	// 		// Though this might be different if the nodes aren't fully occupied!
-	// 		else if (i == nodeOccupancy)
-	// 		{
-	// 			//is this bad form, to have 1 offset here?
-	// 			PageID min_pageID = cur_node_ptr->pageNoArray[i + 1];	
-	// 			Page min_page = file.readPage(min_pageID);
-	// 			Page* min_page_ptr = &min_page;
-	// 			cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
-	// 		}
-	// 	}
-	// }
-	// // Once the first matching node is found then the rest of the scan
-	// related global variables can be setup, this is also where the distinction
-	// between the GTE vs GT might come into play, though it might be in the
-	// scan next method that we worry about that
+		// Find the leftmost non leaf child with key values matching the search,
+		for (int i = 0, i++, i<nodeOccupancy && !found_range)
+		{
+			int key_value = cur_node_ptr->keyArray[i];
+			// There might be issue with 0 key values
+			// Since the lower bound must be contained in the child that defines
+			// a range larger than it if the current key is larger than the lower
+			// bound we will find the value in the corresponding child index
+			if (lowValInt < key_value)
+			{
+				PageID min_pageID = cur_node_ptr->pageNoArray[i];	
+				Page min_page = file.readPage(min_pageID);
+				Page* min_page_ptr = &min_page;
+				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
+			}			
+			// All the key values have been compared and the lower bound is larger
+			// than all of them, thus we take the rightmost child of the node
+			// Though this might be different if the nodes aren't fully occupied!
+			else if (i == nodeOccupancy)
+			{
+				//is this bad form, to have 1 offset here?
+				PageID min_pageID = cur_node_ptr->pageNoArray[i + 1];	
+				Page min_page = file.readPage(min_pageID);
+				Page* min_page_ptr = &min_page;
+				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
+			}
+		}
+	}
+	// Once the first matching node is found then the rest of the scan
+	related global variables can be setup, this is also where the distinction
+	between the GTE vs GT might come into play, though it might be in the
+	scan next method that we worry about that
 	
 	// Index of next entry in current leaf to be scanned
 	// nextEntry = ???;
