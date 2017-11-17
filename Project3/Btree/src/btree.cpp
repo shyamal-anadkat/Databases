@@ -317,6 +317,9 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	lowOp = lowOpParm;
 	highOp = highOpParm;
 
+	// Index of next entry in current leaf to be scanned
+	nextEntry = 0;
+
 	// Start at the root node of the B+ index to traverse for key values
 	// Each non leaf node has an array of key values, and associated child nodes
 	// The nodes are pages, and once I have the page I can cast the pointer to 
@@ -328,6 +331,8 @@ const void BTreeIndex::startScan(const void* lowValParm,
 	Page current_page = file->readPage(index_root_pageID);
 	Page* current_page_pointer = &current_page;
 	struct NonLeafNodeInt* cur_node_ptr = (struct NonLeafNodeInt*)current_page_pointer;
+
+	PageId min_pageID = null;
 
 	//Traverse the tree until the level = 1, this is the last level before leafs
 	while (cur_node_ptr->level != 1)
@@ -342,9 +347,12 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			// Since the lower bound must be contained in the child that defines
 			// a range larger than it if the current key is larger than the lower
 			// bound we will find the value in the corresponding child index
+
+			// If the key_value is zero we need to make sure that the page is points
+			// to is valid, if not then that key isn't occupied
 			if (lowValInt < key_value)
 			{
-				PageId min_pageID = cur_node_ptr->pageNoArray[i];	
+				min_pageID = cur_node_ptr->pageNoArray[i];	
 				Page min_page = file->readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
@@ -355,7 +363,7 @@ const void BTreeIndex::startScan(const void* lowValParm,
 			else if (i == nodeOccupancy)
 			{
 				//is this bad form, to have 1 offset here?
-				PageId min_pageID = cur_node_ptr->pageNoArray[i + 1];	
+				min_pageID = cur_node_ptr->pageNoArray[i + 1];	
 				Page min_page = file->readPage(min_pageID);
 				Page* min_page_ptr = &min_page;
 				cur_node_ptr = (struct NonLeafNodeInt*)min_page_ptr;
@@ -363,17 +371,15 @@ const void BTreeIndex::startScan(const void* lowValParm,
 		}
 	}
 	// Once the first matching node is found then the rest of the scan
-	//related global variables can be setup, this is also where the distinction
-	//between the GTE vs GT might come into play, though it might be in the
-	//scan next method that we worry about that
+	// related global variables can be setup, this is also where the distinction
+	// between the GTE vs GT might come into play, though it might be in the
+	// scan next method that we worry about that
 	
-	// Index of next entry in current leaf to be scanned
-	// nextEntry = ???;
-	// Current page number
-	// currentPageNum = ???;
-	// Current page pointer
-	// currentPageData = ???;
 
+	// Current page number (pageId)
+	currentPageNum = min_pageID;
+	// Current page pointer
+	currentPageData = current_page_pointer;
 }
 
 // -----------------------------------------------------------------------------
