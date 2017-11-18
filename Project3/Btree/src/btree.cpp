@@ -101,18 +101,23 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         strncpy(metaInfo->relationName, relationName.c_str(), sizeof(metaInfo->relationName));
 
         //// root page init ////
+        // Initially, root is a leaf node.
+        // A non leaf root is added only when the leaf is full and splits.
         Page *rootPage;
         this->bufMgr->allocPage(this->file, rootPageNum, rootPage);
-        NonLeafNodeInt *root = (NonLeafNodeInt *) rootPage;
+        LeafNodeInt *root = (LeafNodeInt *) rootPage;
 
-        // Initialize all page numbers to -1.
+        // Initialize all rids to -1.
         // This will help us keep a track of when a node is full
-        for (int idx = 0; idx < INTARRAYNONLEAFSIZE + 1; idx++) {
-            root->pageNoArray[idx] = -1;
+        for (int idx = 0; idx < INTARRAYLEAFSIZE + 1; idx++) {
+            root->ridArray[idx] = -1;
         }
+        root->rightSibPageNo = -1;
 
+        // How certain are we of this ?
+        // What keeps it at 2? Why can it not be a different number?
         metaInfo->rootPageNo = this->rootPageNum = 2; // Root page starts as page 2
-        root->level          = 1;
+
 
         //// unpin headerPage and rootPage ////
         bufMgr->unPinPage(file, headerPageNum, true);
@@ -184,16 +189,34 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     }
 }
 
+const boolean BTreeIndex::isNodeFull(Page *node, bool isLeaf) {
+    if (isLeaf) {
+        LeafNodeInt *leafNode = (LeafNodeInt *) node;
+
+        int idx;
+        for (idx = 0; idx < INTARRAYLEAFSIZE && leafNode->ridArray[idx] != -1; idx++);
+        return idx == INTARRAYLEAFSIZE;
+    }
+    else {
+        NonLeafNodeInt *nonLeafNode = (NonLeafNodeInt *) node;
+
+        int idx;
+        for (idx = 0; idx < INTARRAYNONLEAFSIZE && nonLeafNode->pageNoArray[idx] != -1; idx++);
+        return idx == INTARRAYNONLEAFSIZE;
+    }
+}
+
 const void BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
     if (isLeaf) {
         // Logic for adding to leaf nodes
+        Page leaf = file->readPage(pageNum);
+
         return;
     }
 
-    int key = ridKeyPair ->
+    int key = ridKeyPair->
 
-    // Logic to go down the tree
-
+              // Logic to go down the tree
 }
 
 const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair) {
