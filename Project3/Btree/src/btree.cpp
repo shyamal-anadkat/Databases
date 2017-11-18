@@ -189,41 +189,102 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     }
 }
 
-const bool BTreeIndex::isNodeFull(Page *node, bool isLeaf) {
+const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
     if (isLeaf) {
         LeafNodeInt *leafNode = (LeafNodeInt *) node;
 
         int idx;
         for (idx = 0; idx < INTARRAYLEAFSIZE && leafNode->ridArray[idx] != -1; idx++);
-        return idx == INTARRAYLEAFSIZE;
+        return idx - 1;
     }
     else {
         NonLeafNodeInt *nonLeafNode = (NonLeafNodeInt *) node;
 
         int idx;
-        for (idx = 0; idx < INTARRAYNONLEAFSIZE && nonLeafNode->pageNoArray[idx] != -1; idx++);
-        return idx == INTARRAYNONLEAFSIZE;
+        for (idx = 0; idx <= INTARRAYNONLEAFSIZE && nonLeafNode->pageNoArray[idx] != -1; idx++);
+        return idx - 1;
     }
 }
 
-const Page* BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
+const SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
     if (isLeaf) {
         // Logic for adding to leaf nodes
-        Page leaf = file->readPage(pageNum);
+        Page leafPage;
+        bufMgr->readPage(file, pageNum, &leafPage);
+        struct LeafNodeInt *leafNode = (struct LeafNodeInt *) &leafPage;
+        int key           = ridKeyPair->key;
+        int lastfullIndex = getLastFullIndex(&leafPage, true);
 
-        bool isFull = isNodeFull(&leaf, true);
-
-        if (isFull) {
+        if (lastfullIndex + 1 == INTARRAYLEAFSIZE) {
+            // TODO: All splitting logic here
             // Logic for splitting
-            return true;
+
+            /*int pIdx;
+            *
+            *  for (pIdx = 0; pIdx < INTARRAYLEAFSIZE && key >= leafNode->keyArray[pIdx]; pIdx++);
+            *
+            *  int halfIndex = (INTARRAYLEAFSIZE + 1) / 2;
+            *  PageId newPageId;
+            *  Page *newPage;
+            *
+            *  if (pIdx < halfIndex) {
+            *   bufMgr->allocPage(file, newPageId, newPage);
+            *   struct LeafNodeInt * newLeaf = (struct LeafNodeInt *) newPage;
+            *  }
+            *  else {
+            *  }
+            *
+            *  return 1;*/
+        }
+        else {
+            insertLeafEntry(leafNode, ridKeyPair, lastfullIndex);
+            return NULL;
         }
 
-        return;
+        return NULL;
     }
 
-    int key = ridKeyPair->
+    // Logic to go down the tree
+    int  key = ridKeyPair->key;
+    Page nonLeafPage;
+    bufMgr->readPage(file, pageNum, &nonLeafPage);
+    struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) &nonLeafPage;
+    int lastFullIndex = getLastFullIndex(&nonLeafPage, false);
+    int index;
 
-              // Logic to go down the tree
+    int lastIndex = lastFullIndex - 1;;
+
+    for (index = 0; index <= lastIndex && key >= nonLeafNode->keyArray[index]; index++);
+
+    bool isNextLeaf = nonLeafNode->level == 1;
+
+    SplitData *splitPointer = insertEntry(nonLeafNode->pageNoArray[index], ridKeyPair, isNextLeaf);
+
+    if (splitPointer) {
+        if (lastFullIndex == INTARRAYNONLEAFSIZE) {
+            // TODO: Add split Logic
+        }
+        else {
+            int splitKey = splitPointer->key;
+            int insertIndex;
+
+            for (insertIndex = 0; insertIndex <= lastIndex && splitKey >= nonLeafNode->keyArray[insertIndex]; insertIndex++);
+
+            for (int i = lastIndex, j = lastFullIndex; i >= insertIndex; i--, j--) {
+                nonLeafNode->keyArray[i + 1]    = nonLeafNode->keyArray[i];
+                nonLeafNode->pageNoArray[j + 1] = nonLeafNode->pageNoArray[j];
+            }
+
+            nonLeafNode->keyArray[insertIndex]        = splitKey;
+            nonLeafNode->pageNoArray[insertIndex + 1] = splitPointer->newPageId;
+
+            delete splitPointer;
+            return NULL;
+        }
+    }
+
+    delete splitPointer;
+    return NULL:
 }
 
 const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair) {
@@ -231,6 +292,7 @@ const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair) {
 
 const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry) {
     int pos = 0;
+
     int idx = 0;
 
     //find current pos in the page to insert
@@ -244,7 +306,8 @@ const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPa
     // shift other entries to right
     for (idx = nodeOccupancy - 1; idx > pos; idx--) {
         nonLeafNode->pageNoArray[idx + 1] = nonLeafNode->pageNoArray[idx];
-        nonLeafNode->keyArray[idx]        = nonLeafNode->keyArray[idx - 1];
+
+        nonLeafNode->keyArray[idx] = nonLeafNode->keyArray[idx - 1];
     }
 
 
@@ -267,28 +330,22 @@ const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPa
     nonLeafNode->keyArray[keyIdx]       = pkEntry.key;
 }
 
-const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry) {
-    // find the pos in the node to insert
-    int pos = 0;
-    int idx = 0;
+/**
+ * Assumes leaf node has empty space
+ */
+const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair * < int > kpEntry, int lastFullIndex) {
+    int inputIndex;
+    int key = kpEntry->key;
 
-    while ((pos < leafOccupancy) && (leafNode->ridArray[pos].page_number != 0)) {
-        if (leafNode->keyArray[pos] >= kpEntry.key) {
-            break;
-        }
+    for (inputIndex = 0; inputIndex <= lastfullIndex && key >= leafNode->keyArray[inputIndex]; inputIndex++);
 
-        pos++;
+    for (int i = lastFullIndex + 1; i > inputIndex; i--) {
+        leafNode->keyArray[i] = leafNode->keyArray[i - 1];
+        leafNode->ridArray[i] = leafNode->ridArray[i - 1];
     }
 
-    // shift other entries to right
-    for (idx = leafOccupancy - 1; idx > pos; idx--) {
-        leafNode->ridArray[idx] = leafNode->ridArray[idx - 1];
-        leafNode->keyArray[idx] = leafNode->keyArray[idx - 1];
-    }
-
-    // insert given entry at pos
-    leafNode->keyArray[idx] = kpEntry.key;
-    leafNode->ridArray[idx] = kpEntry.rid;
+    leafNode->keyArray[inputIndex] = key;
+    leafNode->ridArray[inputIndex] = kpEntry->rid;
 }
 
 // -----------------------------------------------------------------------------
