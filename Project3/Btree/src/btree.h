@@ -86,8 +86,8 @@ class SplitData {
 public:
     PageId newPageId;
     T key;
-    void set(Page *p, T k) {
-        newPage = p;
+    void set(PageId p, T k) {
+        newPageId = p;
         key     = k;
     }
 }
@@ -301,7 +301,7 @@ private:
 
     const int getLastFullIndex(Page *node, bool isLeaf);
 
-    const Page *insertEntry(PageId pageNum, RIDKeyPair <int> ridKeyPair, bool isLeaf);
+    const SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf)
 
     const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair * < int > kpEntry, int lastFullIndex)
 
