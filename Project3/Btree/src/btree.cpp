@@ -178,14 +178,39 @@ BTreeIndex::~BTreeIndex() {
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     RIDKeyPair <int> ridkey_entry;
     ridkey_entry.set(rid, *(int *) key);
+    SplitData<int> *splitData;
 
     //if root is leaf, special case
     if (this->rootIsLeaf) {
         // BTreeIndex::insertRootEntry(ridkey_entry);
-        BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
+         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
+
     }
     else {
         //traverse and insert non-root
+        *splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, false);
+    }
+
+    if (splitData) {
+        Page *newPage;
+        PageId newPageId;
+        bufMrg->allocPage(file, newPageId, newpage);
+
+        struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newpage;
+        for (int i = 0; i < INTARRAYNONLEAFSIZE; i++) {
+            newNode->pageNoArray[i] = 0;
+        }
+
+        newNode->keyArray[0] = splitData->key;
+        newNode->pageNoArray[0] = rootPageNum;
+        newNode->pageNoArray[1] = splitData->newPageId;
+        newNode->level = 1;
+
+        rootIsLeaf = false;
+        rootPageNum = newPageId;
+
+        delete splitData;
+        bufMgr->unPinPage(file, newPageId, true);
     }
 }
 
@@ -345,6 +370,7 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
         }
 
         SplitData <int> *newNodeData = new SplitData <int>();
+        newNodeData->set(sendUpKey, newPageId);
         bufMgr->unPinPage(file, pageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
         return newNodeData;
@@ -417,8 +443,6 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
             (leafNode->ridArray[i]).page_number = 0;
         }
 
-        int inpIdx;
-
         for (int i = halfIndex - 1; i > pIdx; i--) {
             leafNode->keyArray[i] = leafNode->keyArray[i - 1];
             leafNode->ridArray[i] = leafNode->ridArray[i - 1];
@@ -430,8 +454,9 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
         leafNode->rightSibPageNo = newPageId;
 
-        SplitData<int> *splitData = new SplitData<int>();
+        SplitData <int> *splitData = new SplitData <int>();
         splitData->set(newPageId, newLeaf->keyArray[0]);
+        bufMgr->unPinPage(file, newPageId, true);
         return splitData;
     }
     else {
@@ -460,8 +485,9 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
         leafNode->rightSibPageNo = newPageId;
 
-        SplitData<int> *splitData = new SplitData<int>();
+        SplitData <int> *splitData = new SplitData <int>();
         splitData->set(newPageId, newLeaf->keyArray[0]);
+        bufMgr->unPinPage(file, newPageId, true);
         return splitData;
     }
 
@@ -470,44 +496,44 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
 }
 
 /*const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry) {
-    int pos = 0;
-
-    int idx = 0;
-
-    //find current pos in the page to insert
-    while ((pos < nodeOccupancy) && (nonLeafNode->pageNoArray[pos] != 0)) {
-        if (nonLeafNode->keyArray[pos] >= pkEntry.key) {
-            break; //found
-        }
-        pos++;
-    }
-
-    // shift other entries to right
-    for (idx = nodeOccupancy - 1; idx > pos; idx--) {
-        nonLeafNode->pageNoArray[idx + 1] = nonLeafNode->pageNoArray[idx];
-
-        nonLeafNode->keyArray[idx] = nonLeafNode->keyArray[idx - 1];
-    }
-
-
-    int pageNoIdx = 0;
-    int keyIdx    = 0;
-
-    if (nonLeafNode->pageNoArray[idx] == 0) {
-        // last position
-        pageNoIdx = idx;
-        keyIdx    = idx - 1;
-    }
-    else {
-        // on position
-        pageNoIdx = idx + 1;
-        keyIdx    = idx;
-    }
-
-    // insertion
-    nonLeafNode->pageNoArray[pageNoIdx] = pkEntry.pageNo;
-    nonLeafNode->keyArray[keyIdx]       = pkEntry.key;
-}*/
+ *  int pos = 0;
+ *
+ *  int idx = 0;
+ *
+ *  //find current pos in the page to insert
+ *  while ((pos < nodeOccupancy) && (nonLeafNode->pageNoArray[pos] != 0)) {
+ *      if (nonLeafNode->keyArray[pos] >= pkEntry.key) {
+ *          break; //found
+ *      }
+ *      pos++;
+ *  }
+ *
+ *  // shift other entries to right
+ *  for (idx = nodeOccupancy - 1; idx > pos; idx--) {
+ *      nonLeafNode->pageNoArray[idx + 1] = nonLeafNode->pageNoArray[idx];
+ *
+ *      nonLeafNode->keyArray[idx] = nonLeafNode->keyArray[idx - 1];
+ *  }
+ *
+ *
+ *  int pageNoIdx = 0;
+ *  int keyIdx    = 0;
+ *
+ *  if (nonLeafNode->pageNoArray[idx] == 0) {
+ *      // last position
+ *      pageNoIdx = idx;
+ *      keyIdx    = idx - 1;
+ *  }
+ *  else {
+ *      // on position
+ *      pageNoIdx = idx + 1;
+ *      keyIdx    = idx;
+ *  }
+ *
+ *  // insertion
+ *  nonLeafNode->pageNoArray[pageNoIdx] = pkEntry.pageNo;
+ *  nonLeafNode->keyArray[keyIdx]       = pkEntry.key;
+ * }*/
 
 /**
  * Assumes leaf node has empty space
