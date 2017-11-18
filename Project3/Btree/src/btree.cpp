@@ -30,8 +30,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
                        std::string& outIndexName,
                        BufMgr *bufMgrIn,
                        const int attrByteOffset,
-                       const Datatype attrType)
-{
+                       const Datatype attrType) {
     //// init fields for Btree ////
     this->bufMgr        = bufMgrIn; //bufManager instance
     this->leafOccupancy = INTARRAYLEAFSIZE;
@@ -55,8 +54,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 
     //// if index file exists, open the file ////
 
-    if (File::exists(outIndexName))
-    {
+    if (File::exists(outIndexName)) {
         //// open file if exists ////
         this->file = new BlobFile(outIndexName, false);
 
@@ -78,8 +76,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         // do not match with values received through constructor parameters.
         if ((indexMetaInfo->attrType != attrType) ||
             (indexMetaInfo->attrByteOffset != attrByteOffset) ||
-            (indexMetaInfo->relationName != relationName))
-        {
+            (indexMetaInfo->relationName != relationName)) {
             throw BadIndexInfoException("Error: Index meta attributes don't match!");
         }
 
@@ -88,9 +85,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 
         rootIsLeaf = (rootPageNum == 2);
     }
-
-    else
-    {
+    else {
         std::cout << "Creating index file ...\n";
         rootIsLeaf = true;
 
@@ -120,8 +115,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         RecordId  curr_rid;
         FileScan *fs = new FileScan(relationName, bufMgr);
         try {
-            while (true)
-            {
+            while (true) {
                 //// scan entry, insert entries here ////
                 fs->scanNext(curr_rid);
                 std::string recordStr      = fs->getRecord();
@@ -139,8 +133,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 // BTreeIndex::~BTreeIndex -- destructor
 // -----------------------------------------------------------------------------
 
-BTreeIndex::~BTreeIndex()
-{
+BTreeIndex::~BTreeIndex() {
     //// flushing the index file ////
     bufMgr->flushFile(file);
 
@@ -170,44 +163,36 @@ BTreeIndex::~BTreeIndex()
  * If root gets split, metapage needs to be changed accordingly.
  * Make sure to unpin pages as soon as you can.
  **/
-const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
-{
+const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     RIDKeyPair <int> ridkey_entry;
     ridkey_entry.set(rid, *(int *) key);
 
     //if root is leaf, special case
-    if (this->rootIsLeaf)
-    {
+    if (this->rootIsLeaf) {
         BTreeIndex::insertRootEntry(ridkey_entry);
     }
-    else
-    {
+    else {
         //traverse and insert non-root
     }
 }
 
-const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair)
-{
+const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair) {
 }
 
-const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry)
-{
+const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry) {
     int pos = 0;
     int idx = 0;
 
     //find current pos in the page to insert
-    while ((pos < nodeOccupancy) && (nonLeafNode->pageNoArray[pos] != 0))
-    {
-        if (nonLeafNode->keyArray[pos] >= pkEntry.key)
-        {
+    while ((pos < nodeOccupancy) && (nonLeafNode->pageNoArray[pos] != 0)) {
+        if (nonLeafNode->keyArray[pos] >= pkEntry.key) {
             break; //found
         }
         pos++;
     }
 
     // shift other entries to right
-    for (idx = nodeOccupancy - 1; idx > pos; idx--)
-    {
+    for (idx = nodeOccupancy - 1; idx > pos; idx--) {
         nonLeafNode->pageNoArray[idx + 1] = nonLeafNode->pageNoArray[idx];
         nonLeafNode->keyArray[idx]        = nonLeafNode->keyArray[idx - 1];
     }
@@ -216,14 +201,12 @@ const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPa
     int pageNoIdx = 0;
     int keyIdx    = 0;
 
-    if (nonLeafNode->pageNoArray[idx] == 0)
-    {
+    if (nonLeafNode->pageNoArray[idx] == 0) {
         // last position
         pageNoIdx = idx;
         keyIdx    = idx - 1;
     }
-    else
-    {
+    else {
         // on position
         pageNoIdx = idx + 1;
         keyIdx    = idx;
@@ -234,16 +217,13 @@ const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPa
     nonLeafNode->keyArray[keyIdx]       = pkEntry.key;
 }
 
-const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry)
-{
+const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry) {
     // find the pos in the node to insert
     int pos = 0;
     int idx = 0;
 
-    while ((pos < leafOccupancy) && (leafNode->ridArray[pos].page_number != 0))
-    {
-        if (leafNode->keyArray[pos] >= kpEntry.key)
-        {
+    while ((pos < leafOccupancy) && (leafNode->ridArray[pos].page_number != 0)) {
+        if (leafNode->keyArray[pos] >= kpEntry.key) {
             break;
         }
 
@@ -251,8 +231,7 @@ const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> k
     }
 
     // shift other entries to right
-    for (idx = leafOccupancy - 1; idx > pos; idx--)
-    {
+    for (idx = leafOccupancy - 1; idx > pos; idx--) {
         leafNode->ridArray[idx] = leafNode->ridArray[idx - 1];
         leafNode->keyArray[idx] = leafNode->keyArray[idx - 1];
     }
@@ -269,8 +248,7 @@ const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> k
 const void BTreeIndex::startScan(const void *lowValParm,
                                  const Operator lowOpParm,
                                  const void *highValParm,
-                                 const Operator highOpParm)
-{
+                                 const Operator highOpParm) {
     // I'm not quite sure of all the functionality of this method. The pdf seems to
     // imply that this sets global variables and then calls the scan next method
     // I don't see why the use of global variables is even necessary as this function
@@ -294,25 +272,21 @@ const void BTreeIndex::startScan(const void *lowValParm,
     ////  Range sanity check ////
     // The range parameters are void pointers, so they must first be cast to
     // integer pointers and then dereferenced to get the actual values.
-    if (*(int *) lowValParm > *(int *) highValParm)
-    {
+    if (*(int *) lowValParm > *(int *) highValParm) {
         throw BadScanrangeException();
     }
 
     // Opcode check
-    if (lowOpParm != GT && lowOpParm != GTE)
-    {
+    if (lowOpParm != GT && lowOpParm != GTE) {
         throw BadOpcodesException();
     }
-    if (highOpParm != LT && lowOpParm != LTE)
-    {
+    if (highOpParm != LT && lowOpParm != LTE) {
         throw BadOpcodesException();
     }
 
 
     // Stop any current scans, might need to do more here
-    if (scanExecuting)
-    {
+    if (scanExecuting) {
         endScan();
     }
 
@@ -343,13 +317,11 @@ const void BTreeIndex::startScan(const void *lowValParm,
     PageId min_pageID;
 
     //Traverse the tree until the level = 1, this is the last level before leafs
-    while (cur_node_ptr->level != 1)
-    {
+    while (cur_node_ptr->level != 1) {
         bool found_range = false;
 
         // Find the leftmost non leaf child with key values matching the search,
-        for (int i = 0; i < nodeOccupancy && !found_range; i++)
-        {
+        for (int i = 0; i < nodeOccupancy && !found_range; i++) {
             int key_value = cur_node_ptr->keyArray[i];
             // There might be issue with 0 key values
             // Since the lower bound must be contained in the child that defines
@@ -358,8 +330,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
             // If the key_value is zero we need to make sure that the page is points
             // to is valid, if not then that key isn't occupied
-            if (lowValInt < key_value)
-            {
+            if (lowValInt < key_value) {
                 min_pageID = cur_node_ptr->pageNoArray[i];
                 Page min_page = file->readPage(min_pageID);
 
@@ -369,8 +340,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
             // All the key values have been compared and the lower bound is larger
             // than all of them, thus we take the rightmost child of the node
             // Though this might be different if the nodes aren't fully occupied!
-            else if (i == nodeOccupancy)
-            {
+            else if (i == nodeOccupancy) {
                 //is this bad form, to have 1 offset here?
                 min_pageID = cur_node_ptr->pageNoArray[i + 1];
                 Page min_page = file->readPage(min_pageID);
@@ -405,19 +375,16 @@ const void BTreeIndex::startScan(const void *lowValParm,
  * @throws ScanNotInitializedException If no scan has been initialized.
  * @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
  **/
-const void BTreeIndex::scanNext(RecordId& outRid)
-{
+const void BTreeIndex::scanNext(RecordId& outRid) {
     //This method fetches the record id of the next
     //tuple that matches the scan criteria.
 
-    if (!scanExecuting)
-    {
+    if (!scanExecuting) {
         throw ScanNotInitializedException();
     }
 
     // should we include this here ?
-    if (this->currentPageNum == 0)
-    {
+    if (this->currentPageNum == 0) {
         throw IndexScanCompletedException();
     }
 
@@ -429,27 +396,23 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 
     // if we reached limit, completed scan
     if ((this->highValInt <= currKey && highOp == LT) ||
-        (this->highValInt < currKey && highOp == LTE))
-    {
+        (this->highValInt < currKey && highOp == LTE)) {
         throw IndexScanCompletedException();
     }
 
     // go through records, fetch the record id of the next index entry that matches the scan.
     if ((lowOp == GTE && currKey < this->lowValInt) ||
-        (lowOp == GT && currKey <= this->lowValInt))
-    {
+        (lowOp == GT && currKey <= this->lowValInt)) {
         outRid = currentPageLeaf->ridArray[nextEntry];
         nextEntry++;
     }
 
     //move on to the right sibling when end of array
-    if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0)
-    {
+    if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) {
         //get page id of right sibling
         PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
 
-        if (nextSiblingPage == 0)
-        {
+        if (nextSiblingPage == 0) {
             throw IndexScanCompletedException();
         }
 
@@ -469,14 +432,12 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 // BTreeIndex::endScan
 // -----------------------------------------------------------------------------
 //
-const void BTreeIndex::endScan()
-{
+const void BTreeIndex::endScan() {
     //@TODO
     //Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
     //@throws ScanNotInitializedException If no scan has been initialized.
 
-    if (!scanExecuting)
-    {
+    if (!scanExecuting) {
         throw ScanNotInitializedException();
     }
 
