@@ -55,6 +55,9 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
     //// if index file exists, open the file ////
 
     if (File::exists(outIndexName)) {
+
+        std::cout << "Index File already exists ...\n";
+
         //// open file if exists ////
         this->file = new BlobFile(outIndexName, false);
 
@@ -118,10 +121,11 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         // What keeps it at 2? Why can it not be a different number?
         metaInfo->rootPageNo = this->rootPageNum = 2; // Root page starts as page 2
 
-
         //// unpin headerPage and rootPage ////
+        try {
         bufMgr->unPinPage(file, headerPageNum, true);
         bufMgr->unPinPage(file, rootPageNum, true);
+        } catch (PageNotPinnedException e) { }
 
         //   insert entries for every tuple in the base relation using FileScan class. ////
         RecordId  curr_rid;
@@ -320,7 +324,7 @@ SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKe
     }
 
     delete splitPointer;
-    bufMgr->unPinPage(file, pageNum, false);
+    //bufMgr->unPinPage(file, pageNum, false);
     return NULL;
 }
 
@@ -780,10 +784,10 @@ const void BTreeIndex::endScan() {
 
     scanExecuting = false;
 
-    try {
-        bufMgr->unPinPage(this->file, this->currentPageNum, false);
-    }
+    //try {
+    //    bufMgr->unPinPage(this->file, this->currentPageNum, false);
+    //}
 
-    catch (PageNotPinnedException e) { }
+    //catch (PageNotPinnedException e) { }
 }
 }
