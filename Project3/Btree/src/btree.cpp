@@ -109,7 +109,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 
         // Initialize all rids to -1.
         // This will help us keep a track of when a node is full
-        for (int idx = 0; idx < INTARRAYLEAFSIZE + 1; idx++) {
+        for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
             root->ridArray[idx] = -1;
         }
         root->rightSibPageNo = -1;
@@ -219,22 +219,79 @@ const SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> 
             // TODO: All splitting logic here
             // Logic for splitting
 
-            /*int pIdx;
-            *
-            *  for (pIdx = 0; pIdx < INTARRAYLEAFSIZE && key >= leafNode->keyArray[pIdx]; pIdx++);
-            *
-            *  int halfIndex = (INTARRAYLEAFSIZE + 1) / 2;
-            *  PageId newPageId;
-            *  Page *newPage;
-            *
-            *  if (pIdx < halfIndex) {
-            *   bufMgr->allocPage(file, newPageId, newPage);
-            *   struct LeafNodeInt * newLeaf = (struct LeafNodeInt *) newPage;
-            *  }
-            *  else {
-            *  }
-            *
-            *  return 1;*/
+            int pIdx;
+
+            for (pIdx = 0; pIdx < INTARRAYLEAFSIZE && key >= leafNode->keyArray[pIdx]; pIdx++);
+
+            int    halfIndex = (INTARRAYLEAFSIZE + 1) / 2;
+            PageId newPageId;
+            Page * newPage;
+
+            bufMgr->allocPage(file, newPageId, newPage);
+            struct LeafNodeInt *newLeaf = (struct LeafNodeInt *) newPage;
+            for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
+                newPage->ridArray[idx] = -1;
+            }
+
+
+            if (pIdx < halfIndex) {
+                for (int i = halfIndex - 1, j = 0; i < INTARRAYLEAFSIZE; i++, j++) {
+                    leafNode->keyArray[i] = newLeaf->keyArray[j];
+                    leafNode->ridArray[i] = newLeaf->ridArray[j];
+                    leafNode->ridArray[i] = -1;
+                }
+
+                int inpIdx;
+                // for (inpIdx = 0; inpIdx < halfIndex - 1 && leafNode->keyArr[inpIdx] <= key; inpIdx++);
+
+                for (int i = halfIndex - 1; i > pIdx; i--) {
+                    leafNode->keyArray[i] = leafNode->keyArray[i - 1];
+                    leafNode->ridArray[i] = leafNode->ridArray[i - 1];
+                }
+
+                leafNode->keyArray[pIdx] = key;
+                leafNode->ridArray[pIdx] = ridKeyPair->rid;
+
+                newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
+                leafNode->rightSibPageNo = newPageId;
+
+                SplitData splitData = new SplitData();
+                splitdata->set(newPageId, newLeaf->keyArray[0]);
+                return splitData;
+            }
+            else {
+                bool newAdded = false;
+                for (int i = halfIndex, j = 0; i < INTARRAYLEAFSIZE; i++, j++) {
+                    if (!newAdded) {
+                        if (i == pIdx) {
+                            newLeaf->keyArray[j] = key;
+                            newLeaf->ridArray[j] = ridKeyPair->rid;
+                            i--;
+                            newAdded = true;
+                        }
+                        else {
+                            newLeaf->keyArray[j]  = leafNode->keyArray[i];
+                            newLeaf->ridArray[j]  = leafNode->ridArray[i];
+                            leafNode->ridArray[i] = -1;
+                        }
+                    }
+                    else {
+                        newLeaf->keyArray[j]  = leafNode->keyArray[i];
+                        newLeaf->ridArray[j]  = leafNode->ridArray[i];
+                        leafNode->ridArray[i] = -1;
+                    }
+                }
+
+                newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
+                leafNode->rightSibPageNo = newPageId;
+
+                SplitData splitData = new SplitData();
+                splitdata->set(newPageId, newLeaf->keyArray[0]);
+                return splitData;
+            }
+
+            // This statement should never be reached
+            return NULL;
         }
         else {
             insertLeafEntry(leafNode, ridKeyPair, lastfullIndex);
