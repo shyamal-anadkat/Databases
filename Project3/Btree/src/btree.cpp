@@ -176,18 +176,20 @@ BTreeIndex::~BTreeIndex() {
  * Make sure to unpin pages as soon as you can.
  **/
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
+    
     RIDKeyPair <int> ridkey_entry;
     ridkey_entry.set(rid, *(int *) key);
     SplitData<int> *splitData;
 
-    //if root is leaf, special case
+    /// if root is leaf, special case
     if (this->rootIsLeaf) {
-        // BTreeIndex::insertRootEntry(ridkey_entry);
+        
+        /// insert entry and tell it that root is the leaf ///
         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
 
     }
     else {
-        //traverse and insert non-root
+        /// traverse and insert non-leaf root entry ///
         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, false);
     }
 
@@ -214,6 +216,7 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     }
 }
 
+/** Helper method to get the last occupied index in a leaf/non-leaf node in the Btree */
 const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
     if (isLeaf) {
         LeafNodeInt *leafNode = (LeafNodeInt *) node;
@@ -233,45 +236,56 @@ const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
 
 SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
     if (isLeaf) {
-        // Logic for adding to leaf nodes
+        /// Logic for adding to leaf nodes ///
         Page *leafPage;
         bufMgr->readPage(file, pageNum, leafPage);
         struct LeafNodeInt *leafNode = (struct LeafNodeInt *) leafPage;
 
         int lastfullIndex = getLastFullIndex(leafPage, true);
 
+        /// need to split the leaf node as it is full ///
         if (lastfullIndex + 1 == INTARRAYLEAFSIZE) {
             SplitData <int> *splitData = splitLeafNode(leafNode, ridKeyPair);
             bufMgr->unPinPage(file, pageNum, true);
             return splitData;
         }
         else {
+            /// insert entry in the leaf ////
             insertLeafEntry(leafNode, ridKeyPair, lastfullIndex);
             bufMgr->unPinPage(file, pageNum, true);
+
+            /// no splitting needed to return null pntr for splitdata ///
             return NULL;
         }
 
-        // These statements should never be reached
+        /// These statements should never be reached /// then why do we need this ? 
         bufMgr->unPinPage(file, pageNum, true);
         return NULL;
     }
 
-    // Logic to go down the tree
+    /// else block for non-leaf insert entry ///
+    /// Logic to go down the tree ///
+
     int   key = ridKeyPair->key;
     Page *nonLeafPage;
     bufMgr->readPage(file, pageNum, nonLeafPage);
+
+    /// cast page to nonLeafNode ///
     struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
+
     int lastFullIndex = getLastFullIndex(nonLeafPage, false);
     int index;
 
-    int lastIndex = lastFullIndex - 1;;
+    int lastIndex = lastFullIndex - 1;
 
+    /// find index to insert ///
     for (index = 0; index <= lastIndex && key >= nonLeafNode->keyArray[index]; index++);
 
     bool isNextLeaf = nonLeafNode->level == 1;
 
     bufMgr->unPinPage(file, pageNum, false);
 
+    /// recursive insert ///
     SplitData <int> *splitPointer = insertEntry(nonLeafNode->pageNoArray[index], ridKeyPair, isNextLeaf);
 
     if (splitPointer) {
@@ -281,6 +295,7 @@ SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKe
             return splitData;
         }
         else {
+            /// insert non-leaf entry, assuming it is not full ///
             Page *nonLeafPage;
             bufMgr->readPage(file, pageNum, nonLeafPage);
             struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
