@@ -431,26 +431,31 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
 }
 
 SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair) {
-    // TODO: All splitting logic here
-    // Logic for splitting
+    /// Logic for splitting
 
     int key = ridKeyPair->key;
 
     int pIdx;
 
+    /// find correct spot, respecting the key order, to insert the entry in leaf ///
     for (pIdx = 0; pIdx < INTARRAYLEAFSIZE && key >= leafNode->keyArray[pIdx]; pIdx++);
 
+    /// halfIndex: where to split, maintaining 50% occupancy ///
     int    halfIndex = (INTARRAYLEAFSIZE + 1) / 2;
+    
+    /// new node that will be returned as split-data ///
     PageId newPageId;
     Page * newPage;
 
     bufMgr->allocPage(file, newPageId, newPage);
+
+    /// initialize rid-array within the new leaf node, all of them are empty rn ///
     struct LeafNodeInt *newLeaf = (struct LeafNodeInt *) newPage;
     for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
         (newLeaf->ridArray[idx]).page_number = 0;
     }
 
-
+    /// actual splitting logic ///
     if (pIdx < halfIndex) {
         for (int i = halfIndex - 1, j = 0; i < INTARRAYLEAFSIZE; i++, j++) {
             newLeaf->keyArray[j] = leafNode->keyArray[i];
@@ -466,9 +471,11 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
         leafNode->keyArray[pIdx] = key;
         leafNode->ridArray[pIdx] = ridKeyPair->rid;
 
+        /// set pointer to the adjacent leaf node ///
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
         leafNode->rightSibPageNo = newPageId;
 
+        /// construct return val - split-data ///
         SplitData <int> *splitData = new SplitData <int>();
         splitData->set(newPageId, newLeaf->keyArray[0]);
         bufMgr->unPinPage(file, newPageId, true);
@@ -506,7 +513,7 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
         return splitData;
     }
 
-    // This statement should never be reached
+    /// This statement should never be reached ///
     return NULL;
 }
 
@@ -551,19 +558,22 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
  * }*/
 
 /**
- * Assumes leaf node has empty space
+ * Assumes leaf node has empty space, finds right spot, shifts and inserts
  */
 const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex) {
     int inputIndex;
     int key = kpEntry->key;
 
+    /// respecting the ordering, find valid spot to insert entry in the leaf node ///
     for (inputIndex = 0; inputIndex <= lastFullIndex && key >= leafNode->keyArray[inputIndex]; inputIndex++);
 
+    /// shift other entries to the right ///
     for (int i = lastFullIndex + 1; i > inputIndex; i--) {
         leafNode->keyArray[i] = leafNode->keyArray[i - 1];
         leafNode->ridArray[i] = leafNode->ridArray[i - 1];
     }
 
+    /// insert at the correct spot ///
     leafNode->keyArray[inputIndex] = key;
     leafNode->ridArray[inputIndex] = kpEntry->rid;
 }
