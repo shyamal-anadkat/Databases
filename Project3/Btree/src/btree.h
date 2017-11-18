@@ -81,6 +81,17 @@ public:
     }
 };
 
+template <class T>
+class SplitData {
+public:
+    PageId newPageId;
+    T key;
+    void set(Page *p, T k) {
+        newPage = p;
+        key     = k;
+    }
+}
+
 /**
  * @brief Overloaded operator to compare the key values of two rid-key pairs
  * and if they are the same compares to see if the first pair has
@@ -288,11 +299,11 @@ private:
 
     bool rootIsLeaf;
 
-	const bool isNodeFull(Page *node, bool isLeaf);
+    const int getLastFullIndex(Page *node, bool isLeaf);
 
-    const Page* insertEntry(PageId pageNum, RIDKeyPair <int> ridKeyPair, bool isLeaf);
+    const Page *insertEntry(PageId pageNum, RIDKeyPair <int> ridKeyPair, bool isLeaf);
 
-    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry);
+    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair * < int > kpEntry, int lastFullIndex)
 
     const void insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry);
 
