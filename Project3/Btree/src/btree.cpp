@@ -189,7 +189,7 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     }
 }
 
-const boolean BTreeIndex::isNodeFull(Page *node, bool isLeaf) {
+const bool BTreeIndex::isNodeFull(Page *node, bool isLeaf) {
     if (isLeaf) {
         LeafNodeInt *leafNode = (LeafNodeInt *) node;
 
@@ -206,10 +206,17 @@ const boolean BTreeIndex::isNodeFull(Page *node, bool isLeaf) {
     }
 }
 
-const void BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
+const Page* BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
     if (isLeaf) {
         // Logic for adding to leaf nodes
         Page leaf = file->readPage(pageNum);
+
+        bool isFull = isNodeFull(&leaf, true);
+
+        if (isFull) {
+            // Logic for splitting
+            return true;
+        }
 
         return;
     }
