@@ -90,7 +90,7 @@ public:
         newPageId = p;
         key     = k;
     }
-}
+};
 
 /**
  * @brief Overloaded operator to compare the key values of two rid-key pairs
@@ -301,13 +301,13 @@ private:
 
     const int getLastFullIndex(Page *node, bool isLeaf);
 
-    const SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf)
+    const SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
 
-    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair * < int > kpEntry, int lastFullIndex)
+    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex);
 
-    const void insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry);
+	const SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
 
-    const void insertRootEntry(RIDKeyPair <int> ridkeypair);
+	const SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair *ridKeyPair);
 
 public:
 
