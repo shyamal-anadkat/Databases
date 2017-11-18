@@ -301,13 +301,13 @@ private:
 
     const int getLastFullIndex(Page *node, bool isLeaf);
 
-    const SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
+    SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
 
     const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex);
 
-	const SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
+	SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
 
-	const SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair *ridKeyPair);
+	SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
 
 public:
 
