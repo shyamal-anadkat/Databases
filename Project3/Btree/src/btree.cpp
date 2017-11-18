@@ -183,20 +183,20 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
     //if root is leaf, special case
     if (this->rootIsLeaf) {
         // BTreeIndex::insertRootEntry(ridkey_entry);
-         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
+        splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
 
     }
     else {
         //traverse and insert non-root
-        *splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, false);
+        splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, false);
     }
 
     if (splitData) {
         Page *newPage;
         PageId newPageId;
-        bufMrg->allocPage(file, newPageId, newpage);
+        bufMgr->allocPage(file, newPageId, newPage);
 
-        struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newpage;
+        struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newPage;
         for (int i = 0; i < INTARRAYNONLEAFSIZE; i++) {
             newNode->pageNoArray[i] = 0;
         }
