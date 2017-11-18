@@ -288,6 +288,8 @@ private:
 
     bool rootIsLeaf;
 
+	const boolean isNodeFull(Page *node, bool isLeaf);
+
     const void insertEntry(PageId pageNum, RIDKeyPair <int> ridKeyPair, bool isLeaf);
 
     const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry);
