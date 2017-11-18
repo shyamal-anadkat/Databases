@@ -107,10 +107,10 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         this->bufMgr->allocPage(this->file, rootPageNum, rootPage);
         LeafNodeInt *root = (LeafNodeInt *) rootPage;
 
-        // Initialize all rids to -1.
+        // Initialize all rids to 0.
         // This will help us keep a track of when a node is full
         for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
-            root->ridArray[idx] = -1;
+            (root->ridArray[idx]).page_number = 0;
         }
         root->rightSibPageNo = -1;
 
@@ -194,49 +194,49 @@ const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
         LeafNodeInt *leafNode = (LeafNodeInt *) node;
 
         int idx;
-        for (idx = 0; idx < INTARRAYLEAFSIZE && leafNode->ridArray[idx] != -1; idx++);
+        for (idx = 0; idx < INTARRAYLEAFSIZE && (leafNode->ridArray[idx]).page_number != 0; idx++);
         return idx - 1;
     }
     else {
         NonLeafNodeInt *nonLeafNode = (NonLeafNodeInt *) node;
 
         int idx;
-        for (idx = 0; idx <= INTARRAYNONLEAFSIZE && nonLeafNode->pageNoArray[idx] != -1; idx++);
+        for (idx = 0; idx <= INTARRAYNONLEAFSIZE && nonLeafNode->pageNoArray[idx] != 0; idx++);
         return idx - 1;
     }
 }
 
-const SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
+SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
     if (isLeaf) {
         // Logic for adding to leaf nodes
-        Page leafPage;
-        bufMgr->readPage(file, pageNum, &leafPage);
-        struct LeafNodeInt *leafNode = (struct LeafNodeInt *) &leafPage;
+        Page *leafPage;
+        bufMgr->readPage(file, pageNum, leafPage);
+        struct LeafNodeInt *leafNode = (struct LeafNodeInt *) leafPage;
 
-        int lastfullIndex = getLastFullIndex(&leafPage, true);
+        int lastfullIndex = getLastFullIndex(leafPage, true);
 
         if (lastfullIndex + 1 == INTARRAYLEAFSIZE) {
-            SplitData <int> splitData = splitLeafNode(leafNode, ridKeyPair);
-            bufMgr->unpinPage(file, pageNum, true);
+            SplitData <int> *splitData = splitLeafNode(leafNode, ridKeyPair);
+            bufMgr->unPinPage(file, pageNum, true);
             return splitData;
         }
         else {
             insertLeafEntry(leafNode, ridKeyPair, lastfullIndex);
-            bufMgr->unpinPage(file, pageNum, true);
+            bufMgr->unPinPage(file, pageNum, true);
             return NULL;
         }
 
         // These statements should never be reached
-        bufMgr->unpinPage(file, pageNum, true);
+        bufMgr->unPinPage(file, pageNum, true);
         return NULL;
     }
 
     // Logic to go down the tree
-    int  key = ridKeyPair->key;
-    Page nonLeafPage;
-    bufMgr->readPage(file, pageNum, &nonLeafPage);
-    struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) &nonLeafPage;
-    int lastFullIndex = getLastFullIndex(&nonLeafPage, false);
+    int   key = ridKeyPair->key;
+    Page *nonLeafPage;
+    bufMgr->readPage(file, pageNum, nonLeafPage);
+    struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
+    int lastFullIndex = getLastFullIndex(nonLeafPage, false);
     int index;
 
     int lastIndex = lastFullIndex - 1;;
@@ -245,20 +245,20 @@ const SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> 
 
     bool isNextLeaf = nonLeafNode->level == 1;
 
-    bufMgr->unpinPage(file, pageNum, false);
+    bufMgr->unPinPage(file, pageNum, false);
 
-    SplitData *splitPointer = insertEntry(nonLeafNode->pageNoArray[index], ridKeyPair, isNextLeaf);
+    SplitData <int> *splitPointer = insertEntry(nonLeafNode->pageNoArray[index], ridKeyPair, isNextLeaf);
 
     if (splitPointer) {
         if (lastFullIndex == INTARRAYNONLEAFSIZE) {
-            SplitData <int> splitData = splitNonLeafNode(nonLeafNode, splitPointer);
+            SplitData <int> *splitData = splitNonLeafNode(pageNum, splitPointer);
             delete splitPointer;
             return splitData;
         }
         else {
-            Page nonLeafPage;
-            bufMgr->readPage(file, pageNum, &nonLeafPage);
-            struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) &nonLeafPage;
+            Page *nonLeafPage;
+            bufMgr->readPage(file, pageNum, nonLeafPage);
+            struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
 
             int splitKey = splitPointer->key;
             int insertIndex;
@@ -274,23 +274,24 @@ const SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> 
             nonLeafNode->pageNoArray[insertIndex + 1] = splitPointer->newPageId;
 
             delete splitPointer;
-            bufMgr->unpinPage(file, pageNum, true);
+            bufMgr->unPinPage(file, pageNum, true);
             return NULL;
         }
     }
 
     delete splitPointer;
-    bufMgr->unpinPage(file, pageNum, false);
+    bufMgr->unPinPage(file, pageNum, false);
     return NULL;
 }
 
-const SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer) {
-    Page nonLeafPage;
+SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer) {
+    Page *nonLeafPage;
 
-    bufMgr->readPage(file, pageNum, &nonLeafPage);
-    struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) &nonLeafPage;
+    bufMgr->readPage(file, pageNum, nonLeafPage);
+    struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
 
     int pIdx;
+    int key = splitPointer->key;
 
     for (pIdx = 0; pIdx < INTARRAYNONLEAFSIZE && key >= nonLeafNode->keyArray[pIdx]; pIdx++);
 
@@ -304,19 +305,19 @@ const SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <i
     struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newPage;
     newNode->level = nonLeafNode->level;
     for (int idx = 0; idx < INTARRAYNONLEAFSIZE + 1; idx++) {
-        newPage->ridArray[idx] = -1;
+        newNode->pageNoArray[idx] = 0;
     }
 
     if (pIdx < halfIndex) {
         int sendUpKey = nonLeafNode->keyArray[halfIndex - 1];
         newNode->pageNoArray[0] = nonLeafNode->pageNoArray[halfIndex];
 
-        nonLeafNode->pageNoArray[halfIndex] = -1;
+        nonLeafNode->pageNoArray[halfIndex] = 0;
 
         for (int i = halfIndex, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
             newNode->keyArray[j]            = nonLeafNode->keyArray[i];
             newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[j + 1];
-            nonLeafNode->pageNoArray[j + 1] = -1;
+            nonLeafNode->pageNoArray[j + 1] = 0;
         }
 
         for (int i = halfIndex - 1; i > pIdx; i--) {
@@ -327,10 +328,10 @@ const SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <i
         nonLeafNode->keyArray[pIdx]    = key;
         nonLeafNode->pageNoArray[pIdx] = splitPointer->newPageId;
 
-        SplitData <int> newNodeData = new SplitData();
-        newNodeData->set(newPageid, sendUpKey);
-        bufMgr->unpinPage(file, pageNum, true);
-        bufMgr->unpinPage(file, newPageId, true);
+        SplitData <int> *newNodeData = new SplitData <int>();
+        newNodeData->set(newPageId, sendUpKey);
+        bufMgr->unPinPage(file, pageNum, true);
+        bufMgr->unPinPage(file, newPageId, true);
         return newNodeData;
     }
     else if (pIdx == halfIndex) {
@@ -340,19 +341,19 @@ const SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <i
         for (int i = halfIndex, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
             newNode->keyArray[j]            = nonLeafNode->keyArray[i];
             newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[j + 1];
-            nonLeafNode->pageNoArray[j + 1] = -1;
+            nonLeafNode->pageNoArray[j + 1] = 0;
         }
 
-        SplitData <int> newNodeData = new SplitData();
-        bufMgr->unpinPage(file, pageNum, true);
-        bufMgr->unpinPage(file, newPageId, true);
+        SplitData <int> *newNodeData = new SplitData <int>();
+        bufMgr->unPinPage(file, pageNum, true);
+        bufMgr->unPinPage(file, newPageId, true);
         return newNodeData;
     }
     else {
         int sendUpKey = nonLeafNode->keyArray[halfIndex];
         newNode->pageNoArray[0] = nonLeafNode->pageNoArray[halfIndex + 1];
 
-        nonLeafNode->pageNoArray[halfIndex + 1] = -1;
+        nonLeafNode->pageNoArray[halfIndex + 1] = 0;
 
         bool newAdded = false;
         for (int i = halfIndex + 1, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
@@ -366,31 +367,33 @@ const SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <i
                 else {
                     newNode->keyArray[j]        = nonLeafNode->keyArray[i];
                     newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
-                    nonLeafNode->pageNoArray[i] = -1;
+                    nonLeafNode->pageNoArray[i] = 0;
                 }
             }
             else {
-                newNode->keyArray[j]     = nonLeafNode->keyArray[i];
-                newNode->ridArray[j]     = nonLeafNode->ridArray[i];
-                nonLeafNode->ridArray[i] = -1;
+                newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
+                newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
+                nonLeafNode->pageNoArray[i] = 0;
             }
         }
 
-        SplitData <int> newNodeData = new SplitData();
-        newNodeData->set(newPageid, sendUpKey);
-        bufMgr->unpinPage(file, pageNum, true);
-        bufMgr->unpinPage(file, newPageId, true);
+        SplitData <int> *newNodeData = new SplitData <int>();
+        newNodeData->set(newPageId, sendUpKey);
+        bufMgr->unPinPage(file, pageNum, true);
+        bufMgr->unPinPage(file, newPageId, true);
         return newNodeData;
     }
 
     // This should never be executed
-    bufMgr->unpinPage(file, pageNum, true);
+    bufMgr->unPinPage(file, pageNum, true);
     return NULL;
 }
 
-const SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair *ridKeyPair) {
+SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair) {
     // TODO: All splitting logic here
     // Logic for splitting
+
+    int key = ridKeyPair->key;
 
     int pIdx;
 
@@ -403,15 +406,15 @@ const SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, R
     bufMgr->allocPage(file, newPageId, newPage);
     struct LeafNodeInt *newLeaf = (struct LeafNodeInt *) newPage;
     for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
-        newPage->ridArray[idx] = -1;
+        (newLeaf->ridArray[idx]).page_number = 0;
     }
 
 
     if (pIdx < halfIndex) {
         for (int i = halfIndex - 1, j = 0; i < INTARRAYLEAFSIZE; i++, j++) {
-            leafNode->keyArray[i] = newLeaf->keyArray[j];
-            leafNode->ridArray[i] = newLeaf->ridArray[j];
-            leafNode->ridArray[i] = -1;
+            newLeaf->keyArray[j] = leafNode->keyArray[i];
+            newLeaf->ridArray[j] = leafNode->ridArray[i];
+            (leafNode->ridArray[i]).page_number = 0;
         }
 
         int inpIdx;
@@ -427,8 +430,8 @@ const SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, R
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
         leafNode->rightSibPageNo = newPageId;
 
-        SplitData splitData = new SplitData();
-        splitdata->set(newPageId, newLeaf->keyArray[0]);
+        SplitData<int> *splitData = new SplitData<int>();
+        splitData->set(newPageId, newLeaf->keyArray[0]);
         return splitData;
     }
     else {
@@ -442,23 +445,23 @@ const SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, R
                     newAdded = true;
                 }
                 else {
-                    newLeaf->keyArray[j]  = leafNode->keyArray[i];
-                    newLeaf->ridArray[j]  = leafNode->ridArray[i];
-                    leafNode->ridArray[i] = -1;
+                    newLeaf->keyArray[j] = leafNode->keyArray[i];
+                    newLeaf->ridArray[j] = leafNode->ridArray[i];
+                    (leafNode->ridArray[i]).page_number = 0;
                 }
             }
             else {
-                newLeaf->keyArray[j]  = leafNode->keyArray[i];
-                newLeaf->ridArray[j]  = leafNode->ridArray[i];
-                leafNode->ridArray[i] = -1;
+                newLeaf->keyArray[j] = leafNode->keyArray[i];
+                newLeaf->ridArray[j] = leafNode->ridArray[i];
+                (leafNode->ridArray[i]).page_number = 0;
             }
         }
 
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
         leafNode->rightSibPageNo = newPageId;
 
-        SplitData splitData = new SplitData();
-        splitdata->set(newPageId, newLeaf->keyArray[0]);
+        SplitData<int> *splitData = new SplitData<int>();
+        splitData->set(newPageId, newLeaf->keyArray[0]);
         return splitData;
     }
 
@@ -466,7 +469,7 @@ const SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, R
     return NULL;
 }
 
-const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry) {
+/*const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry) {
     int pos = 0;
 
     int idx = 0;
@@ -504,7 +507,7 @@ const void BTreeIndex::insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPa
     // insertion
     nonLeafNode->pageNoArray[pageNoIdx] = pkEntry.pageNo;
     nonLeafNode->keyArray[keyIdx]       = pkEntry.key;
-}
+}*/
 
 /**
  * Assumes leaf node has empty space
@@ -513,7 +516,7 @@ const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *
     int inputIndex;
     int key = kpEntry->key;
 
-    for (inputIndex = 0; inputIndex <= lastfullIndex && key >= leafNode->keyArray[inputIndex]; inputIndex++);
+    for (inputIndex = 0; inputIndex <= lastFullIndex && key >= leafNode->keyArray[inputIndex]; inputIndex++);
 
     for (int i = lastFullIndex + 1; i > inputIndex; i--) {
         leafNode->keyArray[i] = leafNode->keyArray[i - 1];
