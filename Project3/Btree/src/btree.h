@@ -288,6 +288,14 @@ private:
 
     bool rootIsLeaf;
 
+    const void insertEntry(Page *node, const RIDKeyPair *ridKeyPain, bool isLeaf);
+
+    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry);
+
+    const void insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry);
+
+    const void insertRootEntry(RIDKeyPair <int> ridkeypair);
+
 public:
 
     /**
@@ -325,14 +333,6 @@ public:
      * @param rid			Record ID of a record whose entry is getting inserted into the index.
      **/
     const void insertEntry(const void *key, const RecordId rid);
-
-
-    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> kpEntry);
-
-    const void insertNonLeafEntry(NonLeafNodeInt *nonLeafNode, PageKeyPair <int> pkEntry);
-
-    const void insertRootEntry(RIDKeyPair <int> ridkeypair);
-
 
     /**
      * Begin a filtered scan of the index.  For instance, if the method is called
