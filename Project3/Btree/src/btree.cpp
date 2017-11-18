@@ -104,6 +104,13 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         Page *rootPage;
         this->bufMgr->allocPage(this->file, rootPageNum, rootPage);
         NonLeafNodeInt *root = (NonLeafNodeInt *) rootPage;
+
+        // Initialize all page numbers to -1.
+        // This will help us keep a track of when a node is full
+        for (int idx = 0; idx < INTARRAYNONLEAFSIZE + 1; idx++) {
+            root->pageNoArray[idx] = -1;
+        }
+
         metaInfo->rootPageNo = this->rootPageNum = 2; // Root page starts as page 2
         root->level          = 1;
 
@@ -169,11 +176,24 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
 
     //if root is leaf, special case
     if (this->rootIsLeaf) {
-        BTreeIndex::insertRootEntry(ridkey_entry);
+        // BTreeIndex::insertRootEntry(ridkey_entry);
+        BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
     }
     else {
         //traverse and insert non-root
     }
+}
+
+const void BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
+    if (isLeaf) {
+        // Logic for adding to leaf nodes
+        return;
+    }
+
+    int key = ridKeyPair ->
+
+    // Logic to go down the tree
+
 }
 
 const void BTreeIndex::insertRootEntry(RIDKeyPair <int> ridkeypair) {
