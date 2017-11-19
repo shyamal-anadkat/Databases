@@ -616,23 +616,23 @@ const void BTreeIndex::startScan(const void *lowValParm,
   // integer pointers and then dereferenced to get the actual values.
   if (*(int *) lowValParm > *(int *) highValParm) 
   {
-      throw BadScanrangeException();
+    throw BadScanrangeException();
   }
 
   // Opcode check
   if (lowOpParm != GT && lowOpParm != GTE) 
   {
-      throw BadOpcodesException();
+    throw BadOpcodesException();
   }
   if (highOpParm != LT && lowOpParm != LTE) 
   {
-      throw BadOpcodesException();
+    throw BadOpcodesException();
   }
 
   // Stop any current scans, might need to do more here
   if (scanExecuting) 
   {
-      endScan();
+    endScan();
   }
 
   // Set up global vars for the scan constraints
@@ -673,9 +673,9 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
       // There might be issue with 0 key values
       // If the key_value is zero we need to make sure that the page is points
-      // to is valid, if not then that key isn't occupied
+      // to is valid, if not then that key isn't valid
       // Either the key is supposed to be 0 or the key is "null"
-      // If the key is supposed to be 0 this function works fine
+      // If the key is supposed to be 0 the first condition will handle it
 
       // Since the lower bound must be contained in the child that defines
       // a range larger than it if the current key is larger than the lower
@@ -690,6 +690,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
         found_range = true;
       }
+      // "Null key" condition check
       else if (key_value == 0)
       {
       	// If the key value is supposed to be 0, then there will be a 
@@ -755,57 +756,64 @@ const void BTreeIndex::startScan(const void *lowValParm,
  * @throws ScanNotInitializedException If no scan has been initialized.
  * @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
  **/
-const void BTreeIndex::scanNext(RecordId& outRid) {
-    //This method fetches the record id of the next
-    //tuple that matches the scan criteria.
+const void BTreeIndex::scanNext(RecordId& outRid) 
+{
+  //This method fetches the record id of the next
+  //tuple that matches the scan criteria.
 
-    if (!scanExecuting) {
-        throw ScanNotInitializedException();
+  if (!scanExecuting) 
+  {
+    throw ScanNotInitializedException();
+  }
+
+  // should we include this here ?
+  if (this->currentPageNum == 0) 
+  {
+    throw IndexScanCompletedException();
+  }
+
+  // get the current node/page being scanned as a leafNode
+  LeafNodeInt *currentPageLeaf = (LeafNodeInt *) (this->currentPageData);
+
+  // int key for next entry in the current scanned page
+  int currKey = currentPageLeaf->keyArray[nextEntry];
+
+  // if we reached limit, completed scan
+  if ((this->highValInt <= currKey && highOp == LT) ||
+      (this->highValInt < currKey && highOp == LTE)) 
+  {
+    throw IndexScanCompletedException();
+  }
+
+  // go through records, fetch the record id of the next index entry that matches the scan.
+  if ((lowOp == GTE && currKey < this->lowValInt) ||
+      (lowOp == GT && currKey <= this->lowValInt)) 
+  {
+    outRid = currentPageLeaf->ridArray[nextEntry];
+    nextEntry++;
+  }
+
+  //move on to the right sibling when end of array
+  if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) 
+  {
+    //get page id of right sibling
+    PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
+
+    if (nextSiblingPage == 0) 
+    {
+      throw IndexScanCompletedException();
     }
 
-    // should we include this here ?
-    if (this->currentPageNum == 0) {
-        throw IndexScanCompletedException();
-    }
+    // unpin current page/node
+    bufMgr->unPinPage(file, currentPageNum, false);
 
-    // get the current node/page being scanned as a leafNode
-    LeafNodeInt *currentPageLeaf = (LeafNodeInt *) (this->currentPageData);
+    // reset next entry in node
+    this->nextEntry = 0;
 
-    // int key for next entry in the current scanned page
-    int currKey = currentPageLeaf->keyArray[nextEntry];
-
-    // if we reached limit, completed scan
-    if ((this->highValInt <= currKey && highOp == LT) ||
-        (this->highValInt < currKey && highOp == LTE)) {
-        throw IndexScanCompletedException();
-    }
-
-    // go through records, fetch the record id of the next index entry that matches the scan.
-    if ((lowOp == GTE && currKey < this->lowValInt) ||
-        (lowOp == GT && currKey <= this->lowValInt)) {
-        outRid = currentPageLeaf->ridArray[nextEntry];
-        nextEntry++;
-    }
-
-    //move on to the right sibling when end of array
-    if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) {
-        //get page id of right sibling
-        PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
-
-        if (nextSiblingPage == 0) {
-            throw IndexScanCompletedException();
-        }
-
-        // unpin current page/node
-        bufMgr->unPinPage(file, currentPageNum, false);
-
-        // reset next entry in node
-        this->nextEntry = 0;
-
-        // set current page num as sibling page & pin the page
-        this->currentPageNum = nextSiblingPage;
-        bufMgr->readPage(file, currentPageNum, currentPageData);
-    }
+    // set current page num as sibling page & pin the page
+    this->currentPageNum = nextSiblingPage;
+    bufMgr->readPage(file, currentPageNum, currentPageData);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -817,8 +825,9 @@ const void BTreeIndex::endScan() {
     //Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
     //@throws ScanNotInitializedException If no scan has been initialized.
 
-    if (!scanExecuting) {
-        throw ScanNotInitializedException();
+    if (!scanExecuting) 
+    {
+      throw ScanNotInitializedException();
     }
 
     scanExecuting = false;
