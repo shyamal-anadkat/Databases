@@ -653,8 +653,8 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
   // Start by getting the root page number, get it's page, make a pointer
   // to that page address and then cast it to the NonLeafNodeInt struct pointer
-  PageId index_root_pageID    = rootPageNum;
-  Page   current_page         = file->readPage(index_root_pageID);
+  PageId index_root_pageID = rootPageNum;
+  Page current_page = file->readPage(index_root_pageID);
   Page* current_page_pointer = &current_page;
 
   PageId min_pageID = 0;
@@ -793,8 +793,8 @@ const void BTreeIndex::scanNext(RecordId& outRid)
   }
 
   // go through records, fetch the record id of the next index entry that matches the scan.
-  if ((lowOp == GTE && currKey > this->lowValInt) ||
-      (lowOp == GT && currKey >= this->lowValInt)) 
+  if ((lowOp == GTE && currKey < this->lowValInt) ||
+      (lowOp == GT && currKey <= this->lowValInt)) 
   {
     outRid = currentPageLeaf->ridArray[nextEntry];
     nextEntry++;
