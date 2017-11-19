@@ -180,14 +180,14 @@ BTreeIndex::~BTreeIndex() {
  * Make sure to unpin pages as soon as you can.
  **/
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
-
+    
     RIDKeyPair <int> ridkey_entry;
     ridkey_entry.set(rid, *(int *) key);
     SplitData<int> *splitData;
 
     /// if root is leaf, special case
     if (this->rootIsLeaf) {
-
+        
         /// insert entry and tell it that root is the leaf ///
         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, true);
 
@@ -210,11 +210,9 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
         newNode->keyArray[0] = splitData->key;
         newNode->pageNoArray[0] = rootPageNum;
         newNode->pageNoArray[1] = splitData->newPageId;
-        newNode->level = rootIsLeaf ? 1 : 0;
+        newNode->level = 1;
 
-        if (rootIsLeaf) {
-            rootIsLeaf = false;
-        }
+        rootIsLeaf = false;
         rootPageNum = newPageId;
 
         delete splitData;
@@ -264,7 +262,7 @@ SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKe
             return NULL;
         }
 
-        /// These statements should never be reached /// then why do we need this ?
+        /// These statements should never be reached /// then why do we need this ? 
         bufMgr->unPinPage(file, pageNum, true);
         return NULL;
     }
@@ -448,7 +446,7 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
 
     /// halfIndex: where to split, maintaining 50% occupancy ///
     int    halfIndex = (INTARRAYLEAFSIZE + 1) / 2;
-
+    
     /// new node that will be returned as split-data ///
     PageId newPageId;
     Page * newPage;
@@ -591,7 +589,7 @@ const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *
 const void BTreeIndex::startScan(const void *lowValParm,
                                  const Operator lowOpParm,
                                  const void *highValParm,
-                                 const Operator highOpParm)
+                                 const Operator highOpParm) 
 {
   // I'm not quite sure of all the functionality of this method. The pdf seems to
   // imply that this sets global variables and then calls the scan next method
@@ -616,23 +614,23 @@ const void BTreeIndex::startScan(const void *lowValParm,
   ////  Range sanity check ////
   // The range parameters are void pointers, so they must first be cast to
   // integer pointers and then dereferenced to get the actual values.
-  if (*(int *) lowValParm > *(int *) highValParm)
+  if (*(int *) lowValParm > *(int *) highValParm) 
   {
     throw BadScanrangeException();
   }
 
   // Opcode check
-  if (lowOpParm != GT && lowOpParm != GTE)
+  if (lowOpParm != GT && lowOpParm != GTE) 
   {
     throw BadOpcodesException();
   }
-  if (highOpParm != LT && lowOpParm != LTE)
+  if (highOpParm != LT && lowOpParm != LTE) 
   {
     throw BadOpcodesException();
   }
 
   // Stop any current scans, might need to do more here
-  if (scanExecuting)
+  if (scanExecuting) 
   {
     endScan();
   }
@@ -660,21 +658,22 @@ const void BTreeIndex::startScan(const void *lowValParm,
   Page* current_page_pointer = &current_page;
 
   PageId min_pageID = 0;
-
+  struct NonLeafNodeInt* cur_node_ptr;
+  
   if (rootIsLeaf)
   {
   	min_pageID = index_root_pageID;
   }
   else
   {
-  	struct NonLeafNodeInt *cur_node_ptr = (struct NonLeafNodeInt *) current_page_pointer;
-
-	  while (cur_node_ptr->level != 1)
+  	cur_node_ptr = (struct NonLeafNodeInt *) current_page_pointer;
+	  
+	  while (cur_node_ptr->level != 1) 
 	  {
 	    bool found_range = false;
 
 	    // Find the leftmost non leaf child with key values matching the search,
-	    for (int i = 0; i < nodeOccupancy && !found_range; i++)
+	    for (int i = 0; i < nodeOccupancy && !found_range; i++) 
 	    {
 	      int key_value = cur_node_ptr->keyArray[i];
 
@@ -687,7 +686,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
 	      // Since the lower bound must be contained in the child that defines
 	      // a range larger than it if the current key is larger than the lower
 	      // bound we will find the value in the corresponding child index
-	      if (lowValInt < key_value)
+	      if (lowValInt < key_value) 
 	      {
 	        min_pageID = cur_node_ptr->pageNoArray[i];
 	        Page min_page = file->readPage(min_pageID);
@@ -700,10 +699,10 @@ const void BTreeIndex::startScan(const void *lowValParm,
 	      // "Null key" condition check
 	      else if (key_value == 0)
 	      {
-	      	// If the key value is supposed to be 0, then there will be a
+	      	// If the key value is supposed to be 0, then there will be a 
 	      	// valid page number at i+1 in the pageNoArry
-	      	// If the key is supposed to be null there won't
-	      	// Can access the i+1 element because even if i is at the end of
+	      	// If the key is supposed to be null there won't      	
+	      	// Can access the i+1 element because even if i is at the end of 
 	      	// the key array the page number array is one larger than it
 	      	min_pageID = cur_node_ptr->pageNoArray[i + 1];
 
@@ -725,7 +724,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
 	      // than all of them, thus we take the rightmost child of the node
 	      // Though this might be different if the nodes aren't fully occupied!
 	      //   The previous check for key_value = 0 should cover non full nodes
-	      else if (i == nodeOccupancy)
+	      else if (i == nodeOccupancy) 
 	      {
 	        //is this bad form, to have 1 offset here?
 	        min_pageID = cur_node_ptr->pageNoArray[i + 1];
@@ -736,20 +735,74 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
 	        found_range = true;
 	      }
+	    }
     }
   }
-	  //Traverse down the tree until the level = 1, this is the last level before leafs
-  }
+	//Traverse down the tree until the level = 1, this is the last level before leafs
+  
   // Once the first matching node is found then the rest of the scan
   // related global variables can be setup, this is also where the distinction
   // between the GTE vs GT might come into play, though it might be in the
   // scan next method that we worry about that
 
+  // Looks like we want to deal with that here instead of scanNext, so now
+  // that we have the parent of the leafnodes we have to find the correct
+  // leaf node to start the scan on.
+  Page* min_leaf_ptr;
+  bool found_range = false;
+
+  for (int i = 0; i < nodeOccupancy && !found_range; i++) 
+  {
+    int key_value = cur_node_ptr->keyArray[i];
+
+    // Look for the leaf node that contains entries of this range
+    if (lowValInt < key_value) 
+    {
+      min_pageID = cur_node_ptr->pageNoArray[i];
+      Page min_page = file->readPage(min_pageID);
+
+      min_leaf_ptr = &min_page;
+
+      found_range = true;
+    }
+    // "Null key" condition check
+    else if (key_value == 0)
+    {
+    	// If the key value is supposed to be 0, then there will be a 
+    	// valid page number at i+1 in the pageNoArry
+    	// If the key is supposed to be null there won't      	
+    	min_pageID = cur_node_ptr->pageNoArray[i + 1];
+
+    	// If the key is null we know that the page number in the i index
+    	// will be the range we are looking for as this is the
+    	// range that is larger than the last valid key value
+    	if (min_pageID == 0)
+    	{
+      	min_pageID = cur_node_ptr->pageNoArray[i];
+        Page min_page = file->readPage(min_pageID);
+
+        min_leaf_ptr = &min_page;
+
+        found_range = true;       
+    	}
+    }
+    // All the key values have been compared and the lower bound is larger
+    // than all of them, thus we take the rightmost child of the node
+    // Though this might be different if the nodes aren't fully occupied!
+    //   The previous check for key_value = 0 should cover non full nodes
+    else if (i == nodeOccupancy) 
+    {
+      min_pageID = cur_node_ptr->pageNoArray[i + 1];
+      Page min_page = file->readPage(min_pageID);
+
+      min_leaf_ptr = &min_page;
+    }
+  }
 
   // Current page number (pageId)
   currentPageNum = min_pageID;
-  // Current page pointer
-  currentPageData = current_page_pointer;
+  // Current page pointer, last non-leaf node, lv = 1
+  currentPageData = min_leaf_ptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -765,18 +818,18 @@ const void BTreeIndex::startScan(const void *lowValParm,
  * @throws ScanNotInitializedException If no scan has been initialized.
  * @throws IndexScanCompletedException If no more records, satisfying the scan criteria, are left to be scanned.
  **/
-const void BTreeIndex::scanNext(RecordId& outRid)
+const void BTreeIndex::scanNext(RecordId& outRid) 
 {
   //This method fetches the record id of the next
   //tuple that matches the scan criteria.
 
-  if (!scanExecuting)
+  if (!scanExecuting) 
   {
     throw ScanNotInitializedException();
   }
 
   // should we include this here ?
-  if (this->currentPageNum == 0)
+  if (this->currentPageNum == 0) 
   {
     throw IndexScanCompletedException();
   }
@@ -789,26 +842,26 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 
   // if we reached limit, completed scan
   if ((this->highValInt <= currKey && highOp == LT) ||
-      (this->highValInt < currKey && highOp == LTE))
+      (this->highValInt < currKey && highOp == LTE)) 
   {
     throw IndexScanCompletedException();
   }
 
   // go through records, fetch the record id of the next index entry that matches the scan.
   if ((lowOp == GTE && currKey < this->lowValInt) ||
-      (lowOp == GT && currKey <= this->lowValInt))
+      (lowOp == GT && currKey <= this->lowValInt)) 
   {
     outRid = currentPageLeaf->ridArray[nextEntry];
     nextEntry++;
   }
 
   //move on to the right sibling when end of array
-  if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0)
+  if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0) 
   {
     //get page id of right sibling
     PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
 
-    if (nextSiblingPage == 0)
+    if (nextSiblingPage == 0) 
     {
       throw IndexScanCompletedException();
     }
@@ -834,7 +887,7 @@ const void BTreeIndex::endScan() {
     //Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
     //@throws ScanNotInitializedException If no scan has been initialized.
 
-    if (!scanExecuting)
+    if (!scanExecuting) 
     {
       throw ScanNotInitializedException();
     }
