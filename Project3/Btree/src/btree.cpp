@@ -657,79 +657,86 @@ const void BTreeIndex::startScan(const void *lowValParm,
   Page   current_page         = file->readPage(index_root_pageID);
   Page* current_page_pointer = &current_page;
 
-  struct NonLeafNodeInt *cur_node_ptr = (struct NonLeafNodeInt *) current_page_pointer;
-
   PageId min_pageID = 0;
-
-  //Traverse down the tree until the level = 1, this is the last level before leafs
-  while (cur_node_ptr->level != 1) 
+  
+  if (rootIsLeaf)
   {
-    bool found_range = false;
+  	min_pageID = index_root_pageID;
+  }
+  else
+  {
+  	struct NonLeafNodeInt *cur_node_ptr = (struct NonLeafNodeInt *) current_page_pointer;
+	  
+	  while (cur_node_ptr->level != 1) 
+	  {
+	    bool found_range = false;
 
-    // Find the leftmost non leaf child with key values matching the search,
-    for (int i = 0; i < nodeOccupancy && !found_range; i++) 
-    {
-      int key_value = cur_node_ptr->keyArray[i];
+	    // Find the leftmost non leaf child with key values matching the search,
+	    for (int i = 0; i < nodeOccupancy && !found_range; i++) 
+	    {
+	      int key_value = cur_node_ptr->keyArray[i];
 
-      // There might be issue with 0 key values
-      // If the key_value is zero we need to make sure that the page is points
-      // to is valid, if not then that key isn't valid
-      // Either the key is supposed to be 0 or the key is "null"
-      // If the key is supposed to be 0 the first condition will handle it
+	      // There might be issue with 0 key values
+	      // If the key_value is zero we need to make sure that the page is points
+	      // to is valid, if not then that key isn't valid
+	      // Either the key is supposed to be 0 or the key is "null"
+	      // If the key is supposed to be 0 the first condition will handle it
 
-      // Since the lower bound must be contained in the child that defines
-      // a range larger than it if the current key is larger than the lower
-      // bound we will find the value in the corresponding child index
-      if (lowValInt < key_value) 
-      {
-        min_pageID = cur_node_ptr->pageNoArray[i];
-        Page min_page = file->readPage(min_pageID);
-
-        Page* min_page_ptr = &min_page;
-        cur_node_ptr = (struct NonLeafNodeInt *) min_page_ptr;
-
-        found_range = true;
-      }
-      // "Null key" condition check
-      else if (key_value == 0)
-      {
-      	// If the key value is supposed to be 0, then there will be a 
-      	// valid page number at i+1 in the pageNoArry
-      	// If the key is supposed to be null there won't      	
-      	// Can access the i+1 element because even if i is at the end of 
-      	// the key array the page number array is one larger than it
-      	min_pageID = cur_node_ptr->pageNoArray[i + 1];
-
-      	// If the key is null we know that the page number in the i index
-      	// will be the range we are looking for as this is the
-      	// range that is larger than the last valid key value
-      	if (min_pageID == 0)
-      	{
-	      	min_pageID = cur_node_ptr->pageNoArray[i];
+	      // Since the lower bound must be contained in the child that defines
+	      // a range larger than it if the current key is larger than the lower
+	      // bound we will find the value in the corresponding child index
+	      if (lowValInt < key_value) 
+	      {
+	        min_pageID = cur_node_ptr->pageNoArray[i];
 	        Page min_page = file->readPage(min_pageID);
 
 	        Page* min_page_ptr = &min_page;
 	        cur_node_ptr = (struct NonLeafNodeInt *) min_page_ptr;
 
 	        found_range = true;
-      	}
-      }
-      // All the key values have been compared and the lower bound is larger
-      // than all of them, thus we take the rightmost child of the node
-      // Though this might be different if the nodes aren't fully occupied!
-      //   The previous check for key_value = 0 should cover non full nodes
-      else if (i == nodeOccupancy) 
-      {
-        //is this bad form, to have 1 offset here?
-        min_pageID = cur_node_ptr->pageNoArray[i + 1];
-        Page min_page = file->readPage(min_pageID);
+	      }
+	      // "Null key" condition check
+	      else if (key_value == 0)
+	      {
+	      	// If the key value is supposed to be 0, then there will be a 
+	      	// valid page number at i+1 in the pageNoArry
+	      	// If the key is supposed to be null there won't      	
+	      	// Can access the i+1 element because even if i is at the end of 
+	      	// the key array the page number array is one larger than it
+	      	min_pageID = cur_node_ptr->pageNoArray[i + 1];
 
-        Page* min_page_ptr = &min_page;
-        cur_node_ptr = (struct NonLeafNodeInt *) min_page_ptr;
+	      	// If the key is null we know that the page number in the i index
+	      	// will be the range we are looking for as this is the
+	      	// range that is larger than the last valid key value
+	      	if (min_pageID == 0)
+	      	{
+		      	min_pageID = cur_node_ptr->pageNoArray[i];
+		        Page min_page = file->readPage(min_pageID);
 
-        found_range = true;
-      }
+		        Page* min_page_ptr = &min_page;
+		        cur_node_ptr = (struct NonLeafNodeInt *) min_page_ptr;
+
+		        found_range = true;
+	      	}
+	      }
+	      // All the key values have been compared and the lower bound is larger
+	      // than all of them, thus we take the rightmost child of the node
+	      // Though this might be different if the nodes aren't fully occupied!
+	      //   The previous check for key_value = 0 should cover non full nodes
+	      else if (i == nodeOccupancy) 
+	      {
+	        //is this bad form, to have 1 offset here?
+	        min_pageID = cur_node_ptr->pageNoArray[i + 1];
+	        Page min_page = file->readPage(min_pageID);
+
+	        Page* min_page_ptr = &min_page;
+	        cur_node_ptr = (struct NonLeafNodeInt *) min_page_ptr;
+
+	        found_range = true;
+	      }
     }
+  }
+	  //Traverse down the tree until the level = 1, this is the last level before leafs
   }
   // Once the first matching node is found then the rest of the scan
   // related global variables can be setup, this is also where the distinction
@@ -786,8 +793,8 @@ const void BTreeIndex::scanNext(RecordId& outRid)
   }
 
   // go through records, fetch the record id of the next index entry that matches the scan.
-  if ((lowOp == GTE && currKey < this->lowValInt) ||
-      (lowOp == GT && currKey <= this->lowValInt)) 
+  if ((lowOp == GTE && currKey > this->lowValInt) ||
+      (lowOp == GT && currKey >= this->lowValInt)) 
   {
     outRid = currentPageLeaf->ridArray[nextEntry];
     nextEntry++;
