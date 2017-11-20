@@ -837,34 +837,28 @@ const void BTreeIndex::scanNext(RecordId& outRid)
   }
 
   // should we include this here ?
-  if (this->currentPageNum == 0)
-  {
-    throw IndexScanCompletedException();
-  }
+  //if (this->currentPageNum == 0)
+  //{
+  //  throw IndexScanCompletedException();
+  //}
 
   // get the current node/page being scanned as a leafNode
   LeafNodeInt *currentPageLeaf = (LeafNodeInt *) (this->currentPageData);
 
-  // int key for next entry in the current scanned page
-  int currKey = currentPageLeaf->keyArray[nextEntry];
-
-  // if we reached limit, completed scan
-  if ((this->highValInt <= currKey && highOp == LT) ||
-      (this->highValInt < currKey && highOp == LTE))
-  {
-    throw IndexScanCompletedException();
-  }
-
-  // go through records, fetch the record id of the next index entry that matches the scan.
-  if ((lowOp == GTE && currKey < this->lowValInt) ||
-      (lowOp == GT && currKey <= this->lowValInt))
-  {
-    outRid = currentPageLeaf->ridArray[nextEntry];
-    nextEntry++;
-  }
+	if(currentPageLeaf->keyArray[nextEntry] < highValInt  && highOp == LT){ 
+	    outRid = currentPageLeaf->ridArray[nextEntry];
+	    nextEntry++;
+	}
+	else if(currentPageLeaf->keyArray[nextEntry] <= highValInt && highOp == LTE){
+	    outRid = currentPageLeaf->ridArray[nextEntry];
+	    nextEntry++;
+	}
+	else {
+	    throw IndexScanCompletedException();
+	}
 
   //move on to the right sibling when end of array
-  if (nextEntry >= leafOccupancy || currentPageLeaf->ridArray[nextEntry].page_number == 0)
+  if (nextEntry >= INTARRAYLEAFSIZE|| currentPageLeaf->ridArray[nextEntry].page_number == 0)
   {
     //get page id of right sibling
     PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
