@@ -49,14 +49,14 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
     outIndexName = indexName;
 
     //// debug checks ////
-    std::cout << "Index File Name: " << indexName << std::endl;
+    // std::cout << "Index File Name: " << indexName << std::endl;
 
 
     //// if index file exists, open the file ////
 
     if (File::exists(outIndexName)) {
 
-        std::cout << "Index File already exists ...\n";
+        // std::cout << "Index File already exists ...\n";
 
         //// open file if exists ////
         this->file = new BlobFile(outIndexName, false);
@@ -89,7 +89,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         rootIsLeaf = (rootPageNum == 2);
     }
     else {
-        std::cout << "Creating index file ...\n";
+        // std::cout << "Creating index file ...\n";
         rootIsLeaf = true;
 
         //// create index file if doesn't exist + meta pg + root pg ////
@@ -115,7 +115,7 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         for (int idx = 0; idx < INTARRAYLEAFSIZE; idx++) {
             (root->ridArray[idx]).page_number = 0;
         }
-        root->rightSibPageNo = -1;
+        root->rightSibPageNo = 0;
 
         // How certain are we of this ?
         // What keeps it at 2? Why can it not be a different number?
@@ -154,11 +154,16 @@ BTreeIndex::~BTreeIndex() {
     bufMgr->flushFile(file);
 
     //// destructor of file class called ////
-    file->~File();
+    // file->~File();
+
+    // no need to call destructor of File.
+    // delete does that for us.
 
     //// del file and bufMgr instance ////
     delete file;
-    delete bufMgr;
+
+    // BufMgr was given to us. We do not delete it
+    // delete bufMgr;
 }
 
 // -----------------------------------------------------------------------------
@@ -364,7 +369,6 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
         newNode->pageNoArray[0] = nonLeafNode->pageNoArray[halfIndex];
 
         nonLeafNode->pageNoArray[halfIndex] = 0;
-
         for (int i = halfIndex, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
             newNode->keyArray[j]            = nonLeafNode->keyArray[i];
             newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[j + 1];
@@ -494,25 +498,31 @@ SplitData <int> *BTreeIndex::splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyP
     }
     else {
         bool newAdded = false;
-        for (int i = halfIndex, j = 0; i < INTARRAYLEAFSIZE; i++, j++) {
+        int idx = 0;
+        for (int i = halfIndex; i < INTARRAYLEAFSIZE; i++, idx++) {
             if (!newAdded) {
                 if (i == pIdx) {
-                    newLeaf->keyArray[j] = key;
-                    newLeaf->ridArray[j] = ridKeyPair->rid;
+                    newLeaf->keyArray[idx] = key;
+                    newLeaf->ridArray[idx] = ridKeyPair->rid;
                     i--;
                     newAdded = true;
                 }
                 else {
-                    newLeaf->keyArray[j] = leafNode->keyArray[i];
-                    newLeaf->ridArray[j] = leafNode->ridArray[i];
+                    newLeaf->keyArray[idx] = leafNode->keyArray[i];
+                    newLeaf->ridArray[idx] = leafNode->ridArray[i];
                     (leafNode->ridArray[i]).page_number = 0;
                 }
             }
             else {
-                newLeaf->keyArray[j] = leafNode->keyArray[i];
-                newLeaf->ridArray[j] = leafNode->ridArray[i];
+                newLeaf->keyArray[idx] = leafNode->keyArray[i];
+                newLeaf->ridArray[idx] = leafNode->ridArray[i];
                 (leafNode->ridArray[i]).page_number = 0;
             }
+        }
+
+        if (!newAdded) {
+            newLeaf->keyArray[idx] = key;
+            newLeaf->ridArray[idx] = ridKeyPair->rid;
         }
 
         newLeaf->rightSibPageNo  = leafNode->rightSibPageNo;
@@ -593,6 +603,104 @@ const void BTreeIndex::insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *
 // BTreeIndex::startScan
 // -----------------------------------------------------------------------------
 
+const void BTreeIndex::startScan(const void *lowValParm,
+                                 const Operator lowOpParm,
+                                 const void *highValParm,
+                                 const Operator highOpParm) {
+
+    if (*(int *) lowValParm > *(int *) highValParm)
+    {
+        throw BadScanrangeException();
+    }
+
+    // Opcode check
+    if (lowOpParm != GT && lowOpParm != GTE)
+    {
+        throw BadOpcodesException();
+    }
+    if (highOpParm != LT && highOpParm != LTE)
+    {
+        throw BadOpcodesException();
+    }
+
+    // Stop any current scans, might need to do more here
+    if (scanExecuting)
+    {
+        endScan();
+    }
+
+    // Set up global vars for the scan constraints
+    scanExecuting = true;
+
+    lowValInt  = *(int *) lowValParm;
+    highValInt = *(int *) highValParm;
+    lowOp      = lowOpParm;
+    highOp     = highOpParm;
+
+    // Index of next entry in current leaf to be scanned
+    nextEntry = 0;
+
+    bool stop = 0;
+    int prev_level = rootIsLeaf ? 1 : 0;
+    currentPageNum = rootPageNum;
+
+    // Finding the proper leaf
+    while (!stop) {
+        if (prev_level) {
+            stop = true;
+            break;
+        }
+
+        Page *curr_page;
+        bufMgr->readPage(file, currentPageNum, curr_page);
+        struct NonLeafNodeInt *node = (struct NonLeafNodeInt *) curr_page;
+
+        int nIdx;
+        for(nIdx = 0; nIdx < nodeOccupancy && node->pageNoArray[nIdx + 1] != 0 && lowValInt >= node->keyArray[nIdx]; nIdx++);
+
+        int nextPage = node->pageNoArray[nIdx];
+        prev_level = node->level;
+
+        bufMgr->unPinPage(file, currentPageNum, false);
+        currentPageNum = nextPage;
+    }
+
+    stop = false;
+
+    while (!stop) {
+        Page *leafPage;
+        bufMgr->readPage(file, currentPageNum, leafPage);
+        currentPageData = leafPage;
+        struct LeafNodeInt *leaf = (struct LeafNodeInt *) leafPage;
+        int sIdx;
+        stop = 0;
+
+        if (lowOp == GT) {
+            for (sIdx = 0; sIdx < leafOccupancy && lowValInt >= leaf->keyArray[sIdx]; sIdx++);
+        } else {
+            for (sIdx = 0; sIdx < leafOccupancy && lowValInt > leaf->keyArray[sIdx]; sIdx++);
+        }
+
+        if (sIdx == leafOccupancy) {
+            int nPage = leaf->rightSibPageNo;
+            if (!nPage) {
+                stop = true;
+                nextEntry = leafOccupancy - 1;
+                currentPageNum = 0;
+                currentPageData = NULL;
+            } else {
+                bufMgr->unPinPage(file, currentPageNum, false);
+                currentPageNum = nPage;
+            }
+        } else {
+            nextEntry = sIdx;
+            stop = true;
+        }
+    }
+}
+
+
+/*
 const void BTreeIndex::startScan(const void *lowValParm,
                                  const Operator lowOpParm,
                                  const void *highValParm,
@@ -680,6 +788,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
     while (cur_node_ptr->level != 1)
     {
       bool found_range = false;
+
 
       // Find the leftmost non leaf child with key values matching the search,
       for (int i = 0; i < nodeOccupancy && !found_range; i++)
@@ -812,6 +921,7 @@ const void BTreeIndex::startScan(const void *lowValParm,
   // Current page pointer, last non-leaf node, lv = 1
   currentPageData = min_leaf_ptr;
 }
+*/
 
 // -----------------------------------------------------------------------------
 // BTreeIndex::scanNext
@@ -836,16 +946,16 @@ const void BTreeIndex::scanNext(RecordId& outRid)
     throw ScanNotInitializedException();
   }
 
-  // should we include this here ?
-  //if (this->currentPageNum == 0)
-  //{
-  //  throw IndexScanCompletedException();
-  //}
+
+  if (this->currentPageNum == 0)
+  {
+   throw IndexScanCompletedException();
+  }
 
   // get the current node/page being scanned as a leafNode
   LeafNodeInt *currentPageLeaf = (LeafNodeInt *) (this->currentPageData);
 
-	if(currentPageLeaf->keyArray[nextEntry] < highValInt  && highOp == LT){ 
+	if(currentPageLeaf->keyArray[nextEntry] < highValInt  && highOp == LT){
 	    outRid = currentPageLeaf->ridArray[nextEntry];
 	    nextEntry++;
 	}
@@ -854,29 +964,38 @@ const void BTreeIndex::scanNext(RecordId& outRid)
 	    nextEntry++;
 	}
 	else {
+        // Unpin page before completing scan
+        bufMgr->unPinPage(file, currentPageNum, false);
+
 	    throw IndexScanCompletedException();
 	}
 
   //move on to the right sibling when end of array
-  if (nextEntry >= INTARRAYLEAFSIZE|| currentPageLeaf->ridArray[nextEntry].page_number == 0)
+  if (nextEntry >= INTARRAYLEAFSIZE || currentPageLeaf->ridArray[nextEntry].page_number == 0)
   {
     //get page id of right sibling
     PageId nextSiblingPage = currentPageLeaf->rightSibPageNo;
+
+    // unpin current page/node
+    bufMgr->unPinPage(file, currentPageNum, false);
 
     if (nextSiblingPage == 0)
     {
       throw IndexScanCompletedException();
     }
 
-    // unpin current page/node
-    bufMgr->unPinPage(file, currentPageNum, false);
-
     // reset next entry in node
     this->nextEntry = 0;
 
     // set current page num as sibling page & pin the page
     this->currentPageNum = nextSiblingPage;
+    // if a sibling exists, go to the sibling. otherwise, set to null
+    // if (currentPageNum) {
+        // currentPageData = NULL;
+    // } else {
     bufMgr->readPage(file, currentPageNum, currentPageData);
+    // }
+
   }
 }
 
@@ -895,6 +1014,8 @@ const void BTreeIndex::endScan() {
     }
 
     scanExecuting = false;
+    currentPageNum = 0;
+    currentPageData = NULL;
 
     //try {
     //    bufMgr->unPinPage(this->file, this->currentPageNum, false);
