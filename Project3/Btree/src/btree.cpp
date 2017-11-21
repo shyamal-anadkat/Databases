@@ -140,11 +140,6 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 
         // unpin any pinned pages
         bufMgr->flushFile(file);
-<<<<<<< HEAD
-
-        //delete fs;
-=======
->>>>>>> 8c6612799895dd72c32bf6c99862052fb4c3c44b
     }
 }
 
@@ -159,16 +154,11 @@ BTreeIndex::~BTreeIndex() {
     }
 
     //// flushing the index file ////
-    if (file) { 
+    if (file) {
         bufMgr->flushFile(file);
     }
 
-<<<<<<< HEAD
-    // no need to call destructor of File.
-    // delete does that for us.
-=======
     //// destructor of file class called ////
->>>>>>> 8c6612799895dd72c32bf6c99862052fb4c3c44b
 
     //// del file and bufMgr instance ////
     delete file;
@@ -560,7 +550,7 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
 
         bufMgr->unPinPage(file, pageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
-        
+
         return newNodeData;
     }
 
