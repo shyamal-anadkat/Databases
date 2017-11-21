@@ -3,3 +3,4 @@
 *.html
 /PyCharm/.idea/*.xml
 .ftpconfig
+*.o
