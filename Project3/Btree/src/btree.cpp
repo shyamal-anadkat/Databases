@@ -56,8 +56,6 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 
     if (File::exists(outIndexName)) {
 
-        // std::cout << "Index File already exists ...\n";
-
         //// open file if exists ////
         this->file = new BlobFile(outIndexName, false);
 
@@ -86,10 +84,10 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         //// page number of root page of B+ tree inside index file. ////
         this->rootPageNum = indexMetaInfo->rootPageNo;
 
+        // if root is the only page, then it is also a root
         rootIsLeaf = (rootPageNum == 2);
     }
     else {
-        // std::cout << "Creating index file ...\n";
         rootIsLeaf = true;
 
         //// create index file if doesn't exist + meta pg + root pg ////
@@ -122,12 +120,12 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         metaInfo->rootPageNo = this->rootPageNum = 2; // Root page starts as page 2
 
         //// unpin headerPage and rootPage ////
-        try {
+        // try {
         bufMgr->unPinPage(file, headerPageNum, true);
         bufMgr->unPinPage(file, rootPageNum, true);
-        } catch (PageNotPinnedException e) { }
+        // } catch (PageNotPinnedException e) { }
 
-        //   insert entries for every tuple in the base relation using FileScan class. ////
+        // insert entries for every tuple in the base relation using FileScan class. ////
         RecordId  curr_rid;
         FileScan *fs = new FileScan(relationName, bufMgr);
         try {
@@ -140,7 +138,9 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
             }
         } catch (EndOfFileException e) { delete fs; }
 
+        // unpin any pinned pages
         bufMgr->flushFile(file);
+
         //delete fs;
     }
 }
@@ -152,9 +152,6 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 BTreeIndex::~BTreeIndex() {
     //// flushing the index file ////
     bufMgr->flushFile(file);
-
-    //// destructor of file class called ////
-    // file->~File();
 
     // no need to call destructor of File.
     // delete does that for us.
@@ -186,8 +183,12 @@ BTreeIndex::~BTreeIndex() {
  **/
 const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
 
+    // Set up the ridKeyPair to be sent to the helper function
     RIDKeyPair <int> ridkey_entry;
     ridkey_entry.set(rid, *(int *) key);
+
+    // splitData holds a value if root was split
+    // NULL otherwise`
     SplitData<int> *splitData;
 
     /// if root is leaf, special case
@@ -202,37 +203,55 @@ const void BTreeIndex::insertEntry(const void *key, const RecordId rid) {
         splitData = BTreeIndex::insertEntry(rootPageNum, &ridkey_entry, false);
     }
 
+    // If the root was split
     if (splitData) {
+        // Create a new NonLeafNode to act as the root
         Page *newPage;
         PageId newPageId;
         bufMgr->allocPage(file, newPageId, newPage);
 
+        // Initialize the root to contain nothing
         struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newPage;
         for (int i = 0; i < INTARRAYNONLEAFSIZE; i++) {
             newNode->pageNoArray[i] = 0;
         }
 
+
         newNode->keyArray[0] = splitData->key;
         newNode->pageNoArray[0] = rootPageNum;
         newNode->pageNoArray[1] = splitData->newPageId;
-        newNode->level = 1;
+        newNode->level = rootIsLeaf ? 1 : 0;
 
+        // root is no longer a leaf
         rootIsLeaf = false;
+
+        // update the root to point to the new node
         rootPageNum = newPageId;
 
+        // Open the metadata page
         Page *metaPage;
         bufMgr->readPage(file, headerPageNum, metaPage);
 
         struct IndexMetaInfo *metaInfo = (struct IndexMetaInfo *) metaPage;
+
+        // Update root page in metadata page
         metaInfo->rootPageNo = rootPageNum;
 
         delete splitData;
+
+        // unpin both pinned pages
         bufMgr->unPinPage(file, headerPageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
     }
 }
 
-/** Helper method to get the last occupied index in a leaf/non-leaf node in the Btree */
+/**
+ Helper method to get the index of last filled element in leaf or non-leaf node.
+
+ @param node Node to check
+ @param isLeaf true if node is a leaf, false otherwise
+ @return index that contains the last filled element in node
+*/
 const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
     if (isLeaf) {
         LeafNodeInt *leafNode = (LeafNodeInt *) node;
@@ -250,21 +269,39 @@ const int BTreeIndex::getLastFullIndex(Page *node, bool isLeaf) {
     }
 }
 
+/**
+ Helper method to recursively add and data to B+ tree, and split if needed.
+
+ @param pageNum page number of the current node
+ @param ridKeyPair contains the key and pecord id that needs to be inserted
+ @param isLeaf true if node is a leaf, false otherwise
+
+ @return NULL if node was not split, otherwise sends the key, and page number
+         of the newly created leaf
+*/
 SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf) {
+
+    // Leaf nodes have to be handled differently
     if (isLeaf) {
         /// Logic for adding to leaf nodes ///
+
+        // Grab the leaf node
         Page *leafPage;
         bufMgr->readPage(file, pageNum, leafPage);
         struct LeafNodeInt *leafNode = (struct LeafNodeInt *) leafPage;
 
+        // Get the last full index in current leaf
         int lastfullIndex = getLastFullIndex(leafPage, true);
 
-        /// need to split the leaf node as it is full ///
+        // Is the leaf is full, we need to split it
         if (lastfullIndex + 1 == INTARRAYLEAFSIZE) {
+            // split leaf, add key, and return the relevant information
             SplitData <int> *splitData = splitLeafNode(leafNode, ridKeyPair);
+            // unpin current page
             bufMgr->unPinPage(file, pageNum, true);
             return splitData;
         }
+        // otherwise, simply add to the existing leaf
         else {
             /// insert entry in the leaf ////
             insertLeafEntry(leafNode, ridKeyPair, lastfullIndex);
@@ -274,7 +311,8 @@ SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKe
             return NULL;
         }
 
-        /// These statements should never be reached /// then why do we need this ?
+        /// These statements should never be reached ///
+        // Statements only present to handle if something goes wrong
         bufMgr->unPinPage(file, pageNum, true);
         return NULL;
     }
@@ -283,64 +321,98 @@ SplitData <int> *BTreeIndex::insertEntry(PageId pageNum, RIDKeyPair <int> *ridKe
     /// Logic to go down the tree ///
 
     int   key = ridKeyPair->key;
+
+    // Get the non-leaf node from blob-file
     Page *nonLeafPage;
     bufMgr->readPage(file, pageNum, nonLeafPage);
 
     /// cast page to nonLeafNode ///
     struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
 
+    // Find index of last entry on the page
     int lastFullIndex = getLastFullIndex(nonLeafPage, false);
     int index;
 
+    // last index of the key
+    // NOTE: each non-leaf node must have at least 1 key
     int lastIndex = lastFullIndex - 1;
 
     /// find index to insert ///
     for (index = 0; index <= lastIndex && key >= nonLeafNode->keyArray[index]; index++);
 
+    // Check if current node is parent of leaf nodes
     bool isNextLeaf = nonLeafNode->level == 1;
 
+    // unpin page before traversing the tree
+    // page will need to be repinned if split is necessary
     bufMgr->unPinPage(file, pageNum, false);
 
     /// recursive insert ///
     SplitData <int> *splitPointer = insertEntry(nonLeafNode->pageNoArray[index], ridKeyPair, isNextLeaf);
 
+    // If the child of current node was split
     if (splitPointer) {
+        // If the current node is also full
         if (lastFullIndex == INTARRAYNONLEAFSIZE) {
+            // split current node, add new key, and links
             SplitData <int> *splitData = splitNonLeafNode(pageNum, splitPointer);
+            // delete split data of the previous split
             delete splitPointer;
+            // return the split data
             return splitData;
         }
+        // current node is not full
         else {
-            /// insert non-leaf entry, assuming it is not full ///
+            /// insert non-leaf entry ///
             Page *nonLeafPage;
             bufMgr->readPage(file, pageNum, nonLeafPage);
             struct NonLeafNodeInt *nonLeafNode = (struct NonLeafNodeInt *) nonLeafPage;
 
             int splitKey = splitPointer->key;
-            int insertIndex;
 
+            // calculate index where the new key should be
+            int insertIndex;
             for (insertIndex = 0; insertIndex <= lastIndex && splitKey >= nonLeafNode->keyArray[insertIndex]; insertIndex++);
 
+            // Shift things to the right to make space for the new key
             for (int i = lastIndex, j = lastFullIndex; i >= insertIndex; i--, j--) {
                 nonLeafNode->keyArray[i + 1]    = nonLeafNode->keyArray[i];
                 nonLeafNode->pageNoArray[j + 1] = nonLeafNode->pageNoArray[j];
             }
 
+            // add new key, and reference to the current node
             nonLeafNode->keyArray[insertIndex]        = splitKey;
             nonLeafNode->pageNoArray[insertIndex + 1] = splitPointer->newPageId;
 
+            // delete split data of the previous split
             delete splitPointer;
+
+            // unpin current node before finishing
             bufMgr->unPinPage(file, pageNum, true);
+
+            // Since no split was performed, return NULL
             return NULL;
         }
     }
 
+    // Split was not performed in lower level
+    // delete is purely defensive. Should do nothing
     delete splitPointer;
-    //bufMgr->unPinPage(file, pageNum, false);
+
     return NULL;
 }
 
+/**
+ Helper function to split, and add data to a non-leaf node
+
+ @param pageNum page number of the node to be split
+ @param splitPointer pointer to data of previous split.
+
+ @return pointer containing the key on which split was performed and page number
+         of the newly created node
+*/
 SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer) {
+    // Read page from the BlobFile
     Page *nonLeafPage;
 
     bufMgr->readPage(file, pageNum, nonLeafPage);
@@ -349,44 +421,62 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
     int pIdx;
     int key = splitPointer->key;
 
+    // calculate where the new key needs to be inserted
     for (pIdx = 0; pIdx < INTARRAYNONLEAFSIZE && key >= nonLeafNode->keyArray[pIdx]; pIdx++);
 
+    // get the index at which the nod will be split
     int halfIndex = (INTARRAYNONLEAFSIZE + 1) / 2;
 
-
+    // create a new node
     PageId newPageId;
     Page * newPage;
 
     bufMgr->allocPage(file, newPageId, newPage);
     struct NonLeafNodeInt *newNode = (struct NonLeafNodeInt *) newPage;
+
+    // level of the new node will be same as its sibling
     newNode->level = nonLeafNode->level;
+    // initialize new node to contain nothing
     for (int idx = 0; idx < INTARRAYNONLEAFSIZE + 1; idx++) {
         newNode->pageNoArray[idx] = 0;
     }
 
+    // if new key is in the first half of the node
     if (pIdx < halfIndex) {
+        // save the key that will be propagated up
         int sendUpKey = nonLeafNode->keyArray[halfIndex - 1];
+        // copy over the corresponding link to newly created node
         newNode->pageNoArray[0] = nonLeafNode->pageNoArray[halfIndex];
 
+        // clean current node's last empty pointer
         nonLeafNode->pageNoArray[halfIndex] = 0;
+
+        // Move over the second half of the node to the new node
         for (int i = halfIndex, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
             newNode->keyArray[j]            = nonLeafNode->keyArray[i];
-            newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[j + 1];
-            nonLeafNode->pageNoArray[j + 1] = 0;
+            newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[i + 1];
+            nonLeafNode->pageNoArray[i + 1] = 0;
         }
 
+        // shift all elements right to make space for new key
         for (int i = halfIndex - 1; i > pIdx; i--) {
             nonLeafNode->keyArray[i]        = nonLeafNode->keyArray[i - 1];
             nonLeafNode->pageNoArray[i + 1] = nonLeafNode->pageNoArray[i];
         }
 
+        // Add key to the current nodd
         nonLeafNode->keyArray[pIdx]    = key;
         nonLeafNode->pageNoArray[pIdx] = splitPointer->newPageId;
 
+        // Save data about the split
         SplitData <int> *newNodeData = new SplitData <int>();
         newNodeData->set(newPageId, sendUpKey);
+
+        // Unpin the page before returning
         bufMgr->unPinPage(file, pageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
+
+        // return the split data
         return newNodeData;
     }
     else if (pIdx == halfIndex) {
