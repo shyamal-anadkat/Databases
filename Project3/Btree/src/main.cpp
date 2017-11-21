@@ -42,7 +42,7 @@ using namespace badgerdb;
 int testNum = 1;
 const std::string relationName = "relA";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
-const int	relationSize = 10000;
+const int	relationSize = 5000;
 std::string intIndexName, doubleIndexName, stringIndexName;
 
 // This is the structure for tuples in the base relation
@@ -67,12 +67,14 @@ BufMgr * bufMgr = new BufMgr(100);
 void createRelationForward();
 void createRelationBackward();
 void createRelationRandom();
+void createRelationStress();
 void intTests();
 int intScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
 void indexTests();
 void test1();
 void test2();
 void test3();
+void test4();
 void errorTests();
 void deleteRelation();
 
@@ -140,6 +142,7 @@ int main(int argc, char **argv)
 	test1();
 	test2();
 	test3();
+	test4();
 	//destructor doesn't get called after errorTests //
 	//errorTests();
 
@@ -176,6 +179,16 @@ void test3()
 	std::cout << "--------------------" << std::endl;
 	std::cout << "createRelationRandom" << std::endl;
 	createRelationRandom();
+	indexTests();
+	deleteRelation();
+}
+
+void test4()
+{
+
+	std::cout << "--------------------" << std::endl;
+	std::cout << "createRelationStress" << std::endl;
+	createRelationStress();
 	indexTests();
 	deleteRelation();
 }
@@ -274,6 +287,48 @@ void createRelationBackward()
 		}
   }
 
+	file1->writePage(new_page_number, new_page);
+}
+
+
+void createRelationStress()
+{
+	std::vector<RecordId> ridVec;
+	try
+	{
+		File::remove(relationName);
+	}
+	catch(FileNotFoundException e)
+	{
+	}
+
+  file1 = new PageFile(relationName, true);
+
+  memset(record1.s, ' ', sizeof(record1.s));
+	PageId new_page_number;
+  Page new_page = file1->allocatePage(new_page_number);
+
+  for(int i = 0; i < 100000; i++ )
+	{
+    sprintf(record1.s, "%05d string record", i);
+    record1.i = i;
+    record1.d = (double)i;
+    std::string new_data(reinterpret_cast<char*>(&record1), sizeof(record1));
+
+		while(1)
+		{
+			try
+			{
+    		new_page.insertRecord(new_data);
+				break;
+			}
+			catch(InsufficientSpaceException e)
+			{
+				file1->writePage(new_page_number, new_page);
+  				new_page = file1->allocatePage(new_page_number);
+			}
+		}
+  }
 	file1->writePage(new_page_number, new_page);
 }
 
