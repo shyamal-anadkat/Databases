@@ -141,7 +141,6 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
         } catch (EndOfFileException e) { delete fs; }
 
         bufMgr->flushFile(file);
-        //delete fs;
     }
 }
 
@@ -150,14 +149,17 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
 // -----------------------------------------------------------------------------
 
 BTreeIndex::~BTreeIndex() {
+
+    if(scanExecuting) {
+        endScan();
+    }
+
     //// flushing the index file ////
-    bufMgr->flushFile(file);
+    if (file) { 
+        bufMgr->flushFile(file);
+    }
 
     //// destructor of file class called ////
-    // file->~File();
-
-    // no need to call destructor of File.
-    // delete does that for us.
 
     //// del file and bufMgr instance ////
     delete file;
@@ -610,16 +612,19 @@ const void BTreeIndex::startScan(const void *lowValParm,
 
     if (*(int *) lowValParm > *(int *) highValParm)
     {
+        scanExecuting = false;
         throw BadScanrangeException();
     }
 
     // Opcode check
     if (lowOpParm != GT && lowOpParm != GTE)
     {
+        scanExecuting = false;
         throw BadOpcodesException();
     }
     if (highOpParm != LT && highOpParm != LTE)
     {
+        scanExecuting = false;
         throw BadOpcodesException();
     }
 
@@ -1017,10 +1022,6 @@ const void BTreeIndex::endScan() {
     currentPageNum = 0;
     currentPageData = NULL;
 
-    //try {
-    //    bufMgr->unPinPage(this->file, this->currentPageNum, false);
-    //}
-
-    //catch (PageNotPinnedException e) { }
+    //should we still unpin here ??
 }
 }

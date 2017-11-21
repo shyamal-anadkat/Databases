@@ -1,0 +1,220 @@
+leaf size:682 non-leaf size:1023
+Extracted : 0
+Extracted : 1
+Extracted : 2
+Extracted : 3
+Extracted : 4
+Extracted : 5
+Extracted : 6
+Extracted : 7
+Extracted : 8
+Extracted : 9
+Extracted : 10
+Extracted : 11
+Extracted : 12
+Extracted : 13
+Extracted : 14
+Extracted : 15
+Extracted : 16
+Extracted : 17
+Extracted : 18
+Extracted : 19
+Read all records
+---------------------
+createRelationForward
+Create a B+ Tree index on the integer field
+Scan for (25,40)
+at:1,27 -->:26:26:00026 string record:
+at:1,28 -->:27:27:00027 string record:
+at:1,29 -->:28:28:00028 string record:
+at:1,30 -->:29:29:00029 string record:
+at:1,31 -->:30:30:00030 string record:
+...
+Number of results: 14
+
+
+Test passed at line no:372
+Scan for [20,35]
+at:1,21 -->:20:20:00020 string record:
+at:1,22 -->:21:21:00021 string record:
+at:1,23 -->:22:22:00022 string record:
+at:1,24 -->:23:23:00023 string record:
+at:1,25 -->:24:24:00024 string record:
+...
+Number of results: 16
+
+
+Test passed at line no:373
+Scan for (-3,3)
+at:1,1 -->:0:0:00000 string record:
+at:1,2 -->:1:1:00001 string record:
+at:1,3 -->:2:2:00002 string record:
+
+
+Test passed at line no:374
+Scan for (996,1001)
+at:11,48 -->:997:997:00997 string record:
+at:11,49 -->:998:998:00998 string record:
+at:11,50 -->:999:999:00999 string record:
+at:11,51 -->:1000:1000:01000 string record:
+
+
+Test passed at line no:375
+Scan for (0,1)
+
+
+Test passed at line no:376
+Scan for (300,400)
+at:4,17 -->:301:301:00301 string record:
+at:4,18 -->:302:302:00302 string record:
+at:4,19 -->:303:303:00303 string record:
+at:4,20 -->:304:304:00304 string record:
+at:4,21 -->:305:305:00305 string record:
+...
+Number of results: 99
+
+
+Test passed at line no:377
+Scan for [3000,4000)
+at:32,56 -->:3000:3000:03000 string record:
+at:32,57 -->:3001:3001:03001 string record:
+at:32,58 -->:3002:3002:03002 string record:
+at:32,59 -->:3003:3003:03003 string record:
+at:32,60 -->:3004:3004:03004 string record:
+...
+Number of results: 1000
+
+
+Test passed at line no:378
+----------------------
+createRelationBackward
+Create a B+ Tree index on the integer field
+Scan for (25,40)
+at:53,34 -->:26:26:00026 string record:
+at:53,33 -->:27:27:00027 string record:
+at:53,32 -->:28:28:00028 string record:
+at:53,31 -->:29:29:00029 string record:
+at:53,30 -->:30:30:00030 string record:
+...
+Number of results: 14
+
+
+Test passed at line no:372
+Scan for [20,35]
+at:53,40 -->:20:20:00020 string record:
+at:53,39 -->:21:21:00021 string record:
+at:53,38 -->:22:22:00022 string record:
+at:53,37 -->:23:23:00023 string record:
+at:53,36 -->:24:24:00024 string record:
+...
+Number of results: 16
+
+
+Test passed at line no:373
+Scan for (-3,3)
+at:53,60 -->:0:0:00000 string record:
+at:53,59 -->:1:1:00001 string record:
+at:53,58 -->:2:2:00002 string record:
+
+
+Test passed at line no:374
+Scan for (996,1001)
+at:43,13 -->:997:997:00997 string record:
+at:43,12 -->:998:998:00998 string record:
+at:43,11 -->:999:999:00999 string record:
+at:43,10 -->:1000:1000:01000 string record:
+
+
+Test passed at line no:375
+Scan for (0,1)
+
+
+Test passed at line no:376
+Scan for (300,400)
+at:50,44 -->:301:301:00301 string record:
+at:50,43 -->:302:302:00302 string record:
+at:50,42 -->:303:303:00303 string record:
+at:50,41 -->:304:304:00304 string record:
+at:50,40 -->:305:305:00305 string record:
+...
+Number of results: 99
+
+
+Test passed at line no:377
+Scan for [3000,4000)
+at:22,5 -->:3000:3000:03000 string record:
+at:22,4 -->:3001:3001:03001 string record:
+at:22,3 -->:3002:3002:03002 string record:
+at:22,2 -->:3003:3003:03003 string record:
+at:22,1 -->:3004:3004:03004 string record:
+...
+Number of results: 1000
+
+
+Test passed at line no:378
+--------------------
+createRelationRandom
+Create a B+ Tree index on the integer field
+Scan for (25,40)
+at:25,28 -->:26:26:00026 string record:
+at:41,35 -->:27:27:00027 string record:
+at:38,25 -->:28:28:00028 string record:
+at:36,84 -->:29:29:00029 string record:
+at:47,7 -->:30:30:00030 string record:
+...
+Number of results: 14
+
+
+Test passed at line no:372
+Scan for [20,35]
+at:32,95 -->:20:20:00020 string record:
+at:27,44 -->:21:21:00021 string record:
+at:53,1 -->:22:22:00022 string record:
+at:26,57 -->:23:23:00023 string record:
+at:33,17 -->:24:24:00024 string record:
+...
+Number of results: 16
+
+
+Test passed at line no:373
+Scan for (-3,3)
+at:45,37 -->:0:0:00000 string record:
+at:13,25 -->:1:1:00001 string record:
+at:20,5 -->:2:2:00002 string record:
+
+
+Test passed at line no:374
+Scan for (996,1001)
+at:49,25 -->:997:997:00997 string record:
+at:27,1 -->:998:998:00998 string record:
+at:4,89 -->:999:999:00999 string record:
+at:18,29 -->:1000:1000:01000 string record:
+
+
+Test passed at line no:375
+Scan for (0,1)
+
+
+Test passed at line no:376
+Scan for (300,400)
+at:18,64 -->:301:301:00301 string record:
+at:31,24 -->:302:302:00302 string record:
+at:53,51 -->:303:303:00303 string record:
+at:42,76 -->:304:304:00304 string record:
+at:10,29 -->:305:305:00305 string record:
+...
+Number of results: 99
+
+
+Test passed at line no:377
+Scan for [3000,4000)
+at:3,81 -->:3000:3000:03000 string record:
+at:45,93 -->:3001:3001:03001 string record:
+at:24,54 -->:3002:3002:03002 string record:
+at:49,93 -->:3003:3003:03003 string record:
+at:9,77 -->:3004:3004:03004 string record:
+...
+Number of results: 1000
+
+
+Test passed at line no:378

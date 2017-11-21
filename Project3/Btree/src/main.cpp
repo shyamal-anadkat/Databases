@@ -42,7 +42,7 @@ using namespace badgerdb;
 int testNum = 1;
 const std::string relationName = "relA";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
-const int	relationSize = 5000;
+const int	relationSize = 10000;
 std::string intIndexName, doubleIndexName, stringIndexName;
 
 // This is the structure for tuples in the base relation
@@ -140,7 +140,9 @@ int main(int argc, char **argv)
 	test1();
 	test2();
 	test3();
+	//destructor doesn't get called after errorTests //
 	//errorTests();
+
 
   return 1;
 }
@@ -376,6 +378,11 @@ void intTests()
 	checkPassFail(intScan(&index,0,GT,1,LT), 0)
 	checkPassFail(intScan(&index,300,GT,400,LT), 99)
 	checkPassFail(intScan(&index,3000,GTE,4000,LT), 1000)
+
+	/// add-on tests ///
+	checkPassFail(intScan(&index,-2000,GT,200,LT),200)
+	checkPassFail(intScan(&index, -145,GT, -1,LT),0)
+	checkPassFail(intScan(&index, 500,GTE,2070,LT), 1570)
 }
 
 int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operator highOp)
@@ -489,7 +496,8 @@ void errorTests()
 
 	file1->writePage(new_page_number, new_page);
 
-  BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple,i), INTEGER);
+
+  	BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple,i), INTEGER);
 	
 	int int2 = 2;
 	int int5 = 5;
@@ -553,6 +561,12 @@ void errorTests()
 	}
 
 	deleteRelation();
+
+	///del index file before following run ///
+	// try { File::remove(intIndexName);}
+  	// catch(FileNotFoundException e) {}
+
+	std::cout << "Error Tests Completed." << std::endl;
 }
 
 void deleteRelation()
