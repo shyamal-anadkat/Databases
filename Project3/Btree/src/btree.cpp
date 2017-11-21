@@ -479,54 +479,74 @@ SplitData <int> *BTreeIndex::splitNonLeafNode(PageId pageNum, SplitData <int> *s
         // return the split data
         return newNodeData;
     }
+    // If the split happens at the new key
     else if (pIdx == halfIndex) {
         int sendUpKey = splitPointer->key;
         newNode->pageNoArray[0] = splitPointer->newPageId;
 
+        // copy over the second half to the new node
         for (int i = halfIndex, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
             newNode->keyArray[j]            = nonLeafNode->keyArray[i];
             newNode->pageNoArray[j + 1]     = nonLeafNode->pageNoArray[j + 1];
             nonLeafNode->pageNoArray[j + 1] = 0;
         }
 
+        // store the relavant split data
         SplitData <int> *newNodeData = new SplitData <int>();
         newNodeData->set(sendUpKey, newPageId);
+
+        // unpin the pages before returning
         bufMgr->unPinPage(file, pageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
+
         return newNodeData;
     }
+    // new key goes in the newly created node
     else {
+        // store the key at which split occurs
         int sendUpKey = nonLeafNode->keyArray[halfIndex];
         newNode->pageNoArray[0] = nonLeafNode->pageNoArray[halfIndex + 1];
 
         nonLeafNode->pageNoArray[halfIndex + 1] = 0;
 
+        // track if the new key was added
         bool newAdded = false;
-        for (int i = halfIndex + 1, j = 0; i < INTARRAYNONLEAFSIZE; i++, j++) {
+        int idx = 0;
+        // add keys to the new node at the appropriate index
+        for (int i = halfIndex + 1; i < INTARRAYNONLEAFSIZE; i++, idx++) {
             if (!newAdded) {
                 if (i == pIdx) {
-                    newNode->keyArray[j]    = key;
-                    newNode->pageNoArray[j] = splitPointer->newPageId;
+                    newNode->keyArray[idx]    = key;
+                    newNode->pageNoArray[idx] = splitPointer->newPageId;
                     i--;
                     newAdded = true;
                 }
                 else {
-                    newNode->keyArray[j]        = nonLeafNode->keyArray[i];
-                    newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
+                    newNode->keyArray[idx]        = nonLeafNode->keyArray[i];
+                    newNode->pageNoArray[idx]     = nonLeafNode->pageNoArray[i];
                     nonLeafNode->pageNoArray[i] = 0;
                 }
             }
             else {
-                newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
-                newNode->pageNoArray[j]     = nonLeafNode->pageNoArray[i];
+                newNode->pageNoArray[idx]     = nonLeafNode->pageNoArray[i];
+                newNode->pageNoArray[idx]     = nonLeafNode->pageNoArray[i];
                 nonLeafNode->pageNoArray[i] = 0;
             }
         }
 
+        // If the new key was not added in the loop, it was the last element
+        // add it at the appropriate index
+        if (!newAdded) {
+            newNode->keyArray[idx]    = key;
+            newNode->pageNoArray[idx] = splitPointer->newPageId;
+        }
+
         SplitData <int> *newNodeData = new SplitData <int>();
         newNodeData->set(newPageId, sendUpKey);
+
         bufMgr->unPinPage(file, pageNum, true);
         bufMgr->unPinPage(file, newPageId, true);
+        
         return newNodeData;
     }
 
