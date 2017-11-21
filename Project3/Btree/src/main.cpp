@@ -23,10 +23,10 @@
 #define checkPassFail(a, b) 																				\
 {																																		\
 	if(a == b)																												\
-		std::cout << "\nTest passed at line no:" << __LINE__ << "\n";		\
+		std::cout << "\nSuccess: Test passed at line no:" << __LINE__ << "\n";		\
 	else																															\
 	{																																	\
-		std::cout << "\nTest FAILS at line no:" << __LINE__;						\
+		std::cout << "\nError:   Test FAILS at line no:" << __LINE__;						\
 		std::cout << "\nExpected no of records:" << b;									\
 		std::cout << "\nActual no of records found:" << a;							\
 		std::cout << std::endl;																					\
@@ -40,6 +40,7 @@ using namespace badgerdb;
 // Globals
 // -----------------------------------------------------------------------------
 int testNum = 1;
+bool isRelationEmpty = false;
 const std::string relationName = "relA";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
 const int	relationSize = 5000;
@@ -67,6 +68,7 @@ BufMgr * bufMgr = new BufMgr(100);
 void createRelationForward();
 void createRelationBackward();
 void createRelationRandom();
+void createEmptyRelation();
 void createRelationStress();
 void intTests();
 int intScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
@@ -75,6 +77,8 @@ void test1();
 void test2();
 void test3();
 void test4();
+void test5();
+void test6();
 void intTestsFileLoad();
 void errorTests();
 void deleteRelation();
@@ -144,6 +148,8 @@ int main(int argc, char **argv)
 	test2();
 	test3();
 	test4();
+	test6();
+	test5();
 	//destructor doesn't get called after errorTests //
 	//errorTests();
 
@@ -193,6 +199,47 @@ void test4()
 	indexTests();
 	deleteRelation();
 }
+
+void test5()
+{
+	std::cout << "--------------------" << std::endl;
+	std::cout << "createRelationEmpty" << std::endl;
+	createEmptyRelation();
+	isRelationEmpty = true;
+	indexTests();
+	deleteRelation();
+	isRelationEmpty = false;
+	std::cout << "SUCCESS: createRelationEmptyTest" << std::endl;
+}
+
+void test6()
+{
+	std::cout << "--------------------" << std::endl;
+	std::cout << "indx-file-test" << std::endl;
+	createRelationRandom();
+	intTestsFileLoad();
+	try{File::remove(intIndexName);}
+  	catch(FileNotFoundException e){}
+	deleteRelation();
+}
+
+// -----------------------------------------------------------------------------
+// createEmptyRelation
+// -----------------------------------------------------------------------------
+void createEmptyRelation()
+{
+	std::vector<RecordId> ridVec;
+	try{File::remove(relationName);}
+	catch(FileNotFoundException e){}
+
+	file1 = new PageFile(relationName, true);
+
+	memset(record1.s, ' ', sizeof(record1.s));
+	PageId new_page_number;
+	Page new_page = file1->allocatePage(new_page_number);
+	file1->writePage(new_page_number, new_page);
+}
+
 
 // -----------------------------------------------------------------------------
 // createRelationForward
@@ -407,7 +454,6 @@ void indexTests()
   if(testNum == 1)
   {
     intTests();
-    intTestsFileLoad();
 		try
 		{
 			File::remove(intIndexName);
@@ -428,18 +474,27 @@ void intTests()
   BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple,i), INTEGER);
 
 	// run some tests
-	checkPassFail(intScan(&index,25,GT,40,LT), 14)
-	checkPassFail(intScan(&index,20,GTE,35,LTE), 16)
-	checkPassFail(intScan(&index,-3,GT,3,LT), 3)
-	checkPassFail(intScan(&index,996,GT,1001,LT), 4)
-	checkPassFail(intScan(&index,0,GT,1,LT), 0)
-	checkPassFail(intScan(&index,300,GT,400,LT), 99)
-	checkPassFail(intScan(&index,3000,GTE,4000,LT), 1000)
+	if(!isRelationEmpty) {
+		checkPassFail(intScan(&index,25,GT,40,LT), 14)
+		checkPassFail(intScan(&index,20,GTE,35,LTE), 16)
+		checkPassFail(intScan(&index,-3,GT,3,LT), 3)
+		checkPassFail(intScan(&index,996,GT,1001,LT), 4)
+		checkPassFail(intScan(&index,0,GT,1,LT), 0)
+		checkPassFail(intScan(&index,300,GT,400,LT), 99)
+		checkPassFail(intScan(&index,3000,GTE,4000,LT), 1000)
 
-	/// add-on tests ///
-	checkPassFail(intScan(&index,-2000,GT,200,LT),200)
-	checkPassFail(intScan(&index, -145,GT, -1,LT),0)
-	checkPassFail(intScan(&index, 500,GTE,2070,LT), 1570)
+		/// add-on tests ///
+		checkPassFail(intScan(&index,-2000,GT,200,LT),200)
+		checkPassFail(intScan(&index, -145,GT, -1,LT),0)
+		checkPassFail(intScan(&index, 500,GTE,2070,LT), 1570)
+
+		// some tests for empty relation //
+	} else {
+		checkPassFail(intScan(&index,25,GT,40,LT), 0)
+		checkPassFail(intScan(&index,20,GTE,35,LTE), 0)
+		checkPassFail(intScan(&index,996,GT,1001,LT), 0)
+		isRelationEmpty = false;
+	}
 }
 
 void intTestsFileLoad() {
