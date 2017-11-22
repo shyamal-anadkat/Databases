@@ -286,24 +286,72 @@ private:
      */
     Operator highOp;
 
+    /*
+    * boolean: is root the leaf for the B+ tree
+    */
     bool rootIsLeaf;
 
-    // const int getLastFullIndex(Page *node, bool isLeaf);
-
-    // SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
-
-    // const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex);
-
-	// SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
-
-	// SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
-
+    /**
+    * Helper call to fetch the last occupied index in the tree node
+    * @param node
+    * @param isLeaf
+    * @return the last occupied index in node
+    */
     const int getLastFullIndex(Page *node, bool isLeaf);
+
+    /**
+    * Function containing the high level logic for adding to a leaf, 
+    * and splitting the leaf if necessary.
+    * @param leafNum
+    * @param ridKeyPair
+    * @return SplitData
+    */
     SplitData <int> *insertLeafEntry(PageId leafNum, RIDKeyPair <int> *ridKeyPair);
+    
+    /**
+    * Splits the leaf node and returns the split data.
+    * Function containing the specific logic of splitting leaves to ensure 
+    * 50% occupancy in both new leaves
+    * @param leafNode    pointer to the leafNode being split
+    * @param ridKeyPair  record-id key pair 
+    * @return SplitData 
+    */
     SplitData <int> *splitLeafNode(LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
+    
+    /**
+    * Inserts an entry into the leaf.
+    * Function containing specific logic to add a record to a non-full leaf.
+    * @param leafNode       pointer to leafNode inserted
+    * @param RIDKeyPair     recordid-key pair to insert
+    * @param lastFullIndex  last occupied index in the leaf node
+    */
     const void insertToLeaf(LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair, int lastFullIndex);
+    
+    /**
+    * Function to recursively traverse the tree and add to appropriate leaf. 
+    * This Function is also responsible for propagating splits back up if needed.
+    * @return SplitData
+    * @param nodeNum
+    * @param ridKeyPair
+    */
     SplitData <int> *insertNonLeafEntry(PageId nodeNum, RIDKeyPair <int> *ridKeyPair);
+    
+    /**
+    * Splits non-leaf node (splitting the middle key)
+    * Function containing specific logic to split a full non-leaf node.
+    * @return SplitData
+    * @param node
+    * @param splitData
+    */
     SplitData <int> *splitNonLeafNode(NonLeafNodeInt *node, SplitData <int> *splitData);
+    
+    /**
+    * Inserts entry to non-leaf, the page,key pair comes from splitdata
+    * Function containing specific logic to add a key to a non-leaf node
+    * @param node
+    * @param splitData
+    * @param lastFullIndex
+    */
     const void insertToNonLeaf(NonLeafNodeInt *node, SplitData <int> *splitData, int lastFullIndex);
 
 public:
