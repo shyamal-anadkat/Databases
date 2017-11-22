@@ -326,7 +326,7 @@ void createRelationStress() {
   PageId new_page_number;
   Page new_page = file1->allocatePage(new_page_number);
 
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 500000; i++) {
     sprintf(record1.s, "%05d string record", i);
     record1.i = i;
     record1.d = (double)i;
