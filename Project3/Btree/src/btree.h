@@ -71,17 +71,6 @@ public:
  * any modifications to the non leaf pages of the tree.
  */
 template <class T>
-class PageKeyPair {
-public:
-    PageId pageNo;
-    T key;
-    void set(int p, T k) {
-        pageNo = p;
-        key    = k;
-    }
-};
-
-template <class T>
 class SplitData {
 public:
     PageId newPageId;
@@ -299,15 +288,23 @@ private:
 
     bool rootIsLeaf;
 
+    // const int getLastFullIndex(Page *node, bool isLeaf);
+
+    // SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
+
+    // const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex);
+
+	// SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
+
+	// SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
+
     const int getLastFullIndex(Page *node, bool isLeaf);
-
-    SplitData <int> *insertEntry(PageId pageNum, RIDKeyPair <int> *ridKeyPair, bool isLeaf);
-
-    const void insertLeafEntry(LeafNodeInt *leafNode, RIDKeyPair <int> *kpEntry, int lastFullIndex);
-
-	SplitData <int> *splitNonLeafNode(PageId pageNum, SplitData <int> *splitPointer);
-
-	SplitData <int> *splitLeafNode(struct LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
+    SplitData <int> *insertLeafEntry(PageId leafNum, RIDKeyPair <int> *ridKeyPair);
+    SplitData <int> *splitLeafNode(LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair);
+    const void insertToLeaf(LeafNodeInt *leafNode, RIDKeyPair <int> *ridKeyPair, int lastFullIndex);
+    SplitData <int> *insertNonLeafEntry(PageId nodeNum, RIDKeyPair <int> *ridKeyPair);
+    SplitData <int> *splitNonLeafNode(NonLeafNodeInt *node, SplitData <int> *splitData);
+    const void insertToNonLeaf(NonLeafNodeInt *node, SplitData <int> *splitData, int lastFullIndex);
 
 public:
 
