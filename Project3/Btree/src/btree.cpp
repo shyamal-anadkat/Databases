@@ -33,11 +33,11 @@ BTreeIndex::BTreeIndex(const std::string& relationName,
     this->bufMgr        = bufMgrIn;
     this->scanExecuting = false;
 
-    // this->leafOccupancy = INTARRAYLEAFSIZE;
-    // this->nodeOccupancy = INTARRAYNONLEAFSIZE;
+    this->leafOccupancy = INTARRAYLEAFSIZE;
+    this->nodeOccupancy = INTARRAYNONLEAFSIZE;
 
-    this->leafOccupancy = 10;
-    this->nodeOccupancy = 10;
+    // this->leafOccupancy = 10;
+    // this->nodeOccupancy = 10;
 
     this->attributeType  = attrType;
     this->attrByteOffset = attrByteOffset;
