@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
   test6();
   test5();
   // destructor doesn't get called after errorTests //
-  // errorTests();
+  errorTests();
 
   return 1;
 }
@@ -420,8 +420,15 @@ void indexTests() {
 
 void intTests() {
   std::cout << "Create a B+ Tree index on the integer field" << std::endl;
+  clock_t t1, t2;
+  t1 = clock(); 
   BTreeIndex index(relationName, intIndexName, bufMgr, offsetof(tuple, i),
                    INTEGER);
+  t2 = clock();
+  float diff ((float)t2-(float)t1);
+  float seconds = diff / CLOCKS_PER_SEC;
+
+  std::cout<<"time: "+ std::to_string(seconds)<<std::endl;
 
   // run some tests
   if (!isRelationEmpty) {
