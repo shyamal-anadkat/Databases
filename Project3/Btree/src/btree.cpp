@@ -464,16 +464,22 @@ const void BTreeIndex::startScan(const void *lowValParm,
                                  const Operator highOpParm) {
     if (*(int *) lowValParm > *(int *) highValParm) {
         scanExecuting = false;
+        currentPageNum  = 0;
+        currentPageData = NULL;
         throw BadScanrangeException();
     }
 
     if (lowOpParm != GT && lowOpParm != GTE) {
-        scanExecuting = false;
+        scanExecuting   = false;
+        currentPageNum  = 0;
+        currentPageData = NULL;
         throw BadOpcodesException();
     }
 
     if (highOpParm != LT && highOpParm != LTE) {
-        scanExecuting = false;
+        scanExecuting   = false;
+        currentPageNum  = 0;
+        currentPageData = NULL;
         throw BadOpcodesException();
     }
 
