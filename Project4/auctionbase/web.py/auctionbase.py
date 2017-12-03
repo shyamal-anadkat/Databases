@@ -54,7 +54,7 @@ urls = ('/currtime', 'curr_time',
         '/selecttime', 'select_time',
         '/search', 'search',
         '/add_bid', 'add_bid',
-        '/', 'home',
+        '/', 'home'
         # TODO: add additional URLs here
         # first parameter => URL, second parameter => class name
         )
@@ -86,7 +86,7 @@ class search:
             min_price = search_params['minPrice']
             max_price = search_params['maxPrice']
             status    = search_params['status']
-            #items = []
+            items = []
             
             items = sqlitedb.getItemsOnSearch(item_id, user_id, min_price, max_price, status)
             # @TODO queries in sqlitedb
@@ -97,26 +97,49 @@ class search:
 
         return render_template('search.html', search_result= items, message= message)
 
-
 class add_bid:
     def GET(self):
         return render_template('add_bid.html')
+
     def POST(self):
         try:
             post_params = web.input()
-
+            add_result = ''
             item_id = post_params['itemID']
             price   = post_params['price']
             user_id = post_params['userID']
             current_time = sqlitedb.getTime()
 
+            # Validation checks
+
+            if(item_id == '' or price == '' or user_id == ''):
+                return render_template('add_bid.html', message = 'Error: All fields are required')
+
+            if(sqlitedb.getItemById(item_id) == None):
+                return render_template('add_bid.html', message = 'Error: Invalid Item ID !')
+            # @TODO: add more validation checks 
+            if(sqlitedb.getUserById(user_id) == None):
+                return render_template('add_bid.html', message = 'Error: Invalid User ID !')
+
+            # insert transaction 
+            t = sqlitedb.transaction()
+            try:
+                sqlitedb.db.insert('Bids', ItemID = item_id, UserID = user_id, Amount = price, Time = current_time)
+            
+            except Exception as e:
+                t.rollback()
+                message = 'insert failed'
+                print str(e)
+            
+            else:
+                t.commit()
+                message = 'insert success'
 
             # @TODO validations
-            add_result = 'done'
-            message = 'insert success'
+            # add_result = 'executed.'
+            
         except Exception as e:
             message = str(e)
-            add_result = ''
 
         return render_template('add_bid.html', message=message, add_result=add_result)
 

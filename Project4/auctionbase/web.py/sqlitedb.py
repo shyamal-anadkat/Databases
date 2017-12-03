@@ -43,9 +43,22 @@ def getTime():
 # a given ID), this will throw an Exception!
 def getItemById(item_id):
     # TODO: rewrite this method to catch the Exception in case `result' is empty
-    query_string = 'select * from Items where item_ID = $itemID'
-    result = query(query_string, {'itemID': item_id})
-    return result[0]
+    query_string = 'select * from Items where ItemID = $itemID'
+    try:
+        result = query(query_string, {'itemID': item_id})
+        return result[0]
+    except IndexError:
+        return None
+    
+
+def getUserById(user_id):
+    # TODO: rewrite this method to catch the Exception in case `result' is empty
+    query_string = 'select * from Users where UserID = $userID'
+    try: 
+        result = query(query_string, {'userID': user_id})
+        return result[0]
+    except IndexError:
+        return None
 
 # wrapper method around web.py's db.query method
 # check out http://webpy.org/cookbook/query for more info
@@ -70,7 +83,7 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
         if(userID != ''):
             if (itemID != ''):
                 _query += ' AND '
-            _query += ' UserID = ' + userID
+            _query += ' Seller_UserID = ' + "'"+userID+"'"
 
         if(minPrice != ''):
             if (itemID != '' or userID != ''): 
