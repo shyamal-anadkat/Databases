@@ -52,6 +52,9 @@ def render_template(template_name, **context):
 
 urls = ('/currtime', 'curr_time',
         '/selecttime', 'select_time',
+        '/search', 'search',
+        '/add_bid', 'add_bid',
+        '/', 'home',
         # TODO: add additional URLs here
         # first parameter => URL, second parameter => class name
         )
@@ -64,6 +67,57 @@ class curr_time:
     def GET(self):
         current_time = sqlitedb.getTime()
         return render_template('curr_time.html', time = current_time)
+
+# temp-home landing page
+class home:
+    def GET(self):
+        return render_template('home.html')
+
+class search:
+    def GET(self):
+        return render_template('search.html')
+
+    def POST(self):
+        try:
+            search_params = web.input()
+
+            item_id   = search_params['itemID']
+            user_id   = search_params['userID']
+            min_price = search_params['minPrice']
+            max_price = search_params['maxPrice']
+            status    = search_params['status']
+            search_result = []
+            
+            # @TODO queries in sqlitedb
+            message = 'success'
+
+        except Exception as e:
+            message = str(e)
+
+        return render_template('search.html', search_result= search_result, message= message)
+
+
+class add_bid:
+    def GET(self):
+        return render_template('add_bid.html')
+    def POST(self):
+        try:
+            post_params = web.input()
+
+            item_id = post_params['itemID']
+            price   = post_params['price']
+            user_id = post_params['userID']
+            current_time = sqlitedb.getTime()
+
+
+            # @TODO validations
+            add_result = 'done'
+            message = 'insert success'
+        except Exception as e:
+            message = str(e)
+            add_result = ''
+
+        return render_template('add_bid.html', message=message, add_result=add_result)
 
 class select_time:
     # Aanother GET request, this time to the URL '/selecttime'
