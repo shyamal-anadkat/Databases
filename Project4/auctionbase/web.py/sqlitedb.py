@@ -56,3 +56,42 @@ def query(query_string, vars = {}):
 
 #TODO: additional methods to interact with your database,
 # e.g. to update the current time
+
+def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
+
+    _query = 'SELECT * FROM Items'
+    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '' and minPrice == '')
+
+    if not no_params:
+        _query += ' WHERE '
+        if(itemID != ''):
+            _query += 'ItemID = ' + itemID
+
+        if(userID != ''):
+            if (itemID != ''):
+                _query += ' AND '
+            _query += ' UserID = ' + userID
+
+        if(minPrice != ''):
+            if (itemID != '' or userID != ''): 
+                _query += ' AND '
+            _query += ' Currently >= ' + minPrice
+
+        if(maxPrice != ''):
+            if (itemID != '' or userID != '' or minPrice != ''): 
+                _query += ' AND '
+            _query += ' Currently <= ' + maxPrice
+                
+        if(status != 'all'):
+            if(itemID != '' or userID != '' or minPrice != '' or maxPrice != ''):
+                _query += ' AND '
+            if status == 'open':
+                _query += '(select Time from CurrentTime) between Started and Ends'
+            elif status == 'notStarted':
+                _query += 'Started > (select Time from CurrentTime)'
+            elif status == 'close':
+                _query += 'Ends < (select Time from CurrentTime)'
+
+    result = query (_query)
+    print _query #debug
+    return result

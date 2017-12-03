@@ -86,15 +86,16 @@ class search:
             min_price = search_params['minPrice']
             max_price = search_params['maxPrice']
             status    = search_params['status']
-            search_result = []
+            #items = []
             
+            items = sqlitedb.getItemsOnSearch(item_id, user_id, min_price, max_price, status)
             # @TODO queries in sqlitedb
-            message = 'success'
+            message = 'Success ! Retreived ' + str(len(items)) + ' results.'
 
         except Exception as e:
             message = str(e)
 
-        return render_template('search.html', search_result= search_result, message= message)
+        return render_template('search.html', search_result= items, message= message)
 
 
 class add_bid:
