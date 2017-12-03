@@ -167,6 +167,18 @@ class select_time:
         selected_time = '%s-%s-%s %s:%s:%s' % (yyyy, MM, dd, HH, mm, ss)
         update_message = '(Hello, %s. Previously selected time was: %s.)' % (enter_name, selected_time)
         # TODO: save the selected time as the current time in the database
+        # insert transaction 
+        t = sqlitedb.transaction()
+        try:
+            sqlitedb.db.insert('CurrentTime', Time = selected_time)
+        
+        except Exception as e:
+            t.rollback()
+            update_message = str(e)
+            print str(e)
+        
+        else:
+            t.commit()
 
         # Here, we assign `update_message' to `message', which means
         # we'll refer to it in our template as `message'
