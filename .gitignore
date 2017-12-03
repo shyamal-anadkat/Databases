@@ -1,6 +1,6 @@
 .DS_Store
 *.dat
-*.html
 /PyCharm/.idea/*.xml
 .ftpconfig
 *.o
+*.pyc
