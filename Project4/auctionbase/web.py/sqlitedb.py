@@ -30,19 +30,20 @@ def transaction():
 
 # returns the current time from your database
 def getTime():
-    # TODO: update the query string to match
+    # update the query string to match
     # the correct column and table name in your database
     query_string = 'select Time from CurrentTime'
     results = query(query_string)
     # alternatively: return results[0]['currenttime']
-    return results[0].Time # TODO: update this as well to match the
+    # print str(results)
+    return results[0].Time # update this as well to match the
                                   # column name
 
 # returns a single item specified by the Item's ID in the database
 # Note: if the `result' list is empty (i.e. there are no items for a
 # a given ID), this will throw an Exception!
 def getItemById(item_id):
-    # TODO: rewrite this method to catch the Exception in case `result' is empty
+    # rewrite this method to catch the Exception in case `result' is empty
     query_string = 'select * from Items where ItemID = $itemID'
     try:
         result = query(query_string, {'itemID': item_id})
@@ -52,7 +53,7 @@ def getItemById(item_id):
     
 
 def getUserById(user_id):
-    # TODO: rewrite this method to catch the Exception in case `result' is empty
+    # rewrite this method to catch the Exception in case `result' is empty
     query_string = 'select * from Users where UserID = $userID'
     try: 
         result = query(query_string, {'userID': user_id})

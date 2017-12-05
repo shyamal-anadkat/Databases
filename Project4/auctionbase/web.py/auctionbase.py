@@ -163,13 +163,13 @@ class select_time:
         ss = post_params['ss'];
         enter_name = post_params['entername']
 
-
         selected_time = '%s-%s-%s %s:%s:%s' % (yyyy, MM, dd, HH, mm, ss)
         update_message = '(Hello, %s. Previously selected time was: %s.)' % (enter_name, selected_time)
         # TODO: save the selected time as the current time in the database
         # insert transaction 
         t = sqlitedb.transaction()
         try:
+            sqlitedb.db.query('delete from CurrentTime')
             sqlitedb.db.insert('CurrentTime', Time = selected_time)
         
         except Exception as e:
