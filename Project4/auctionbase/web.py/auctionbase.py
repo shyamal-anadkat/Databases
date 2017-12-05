@@ -112,28 +112,37 @@ class add_bid:
 
             # Validation checks
 
+            # make all input fields required
             if(item_id == '' or price == '' or user_id == ''):
                 return render_template('add_bid.html', message = 'Error: All fields are required')
 
+            # don't accept bids on items that don't exist 
             if(sqlitedb.getItemById(item_id) == None):
                 return render_template('add_bid.html', message = 'Error: Invalid Item ID !')
-            # @TODO: add more validation checks 
+
+            # Don't accept bids from users that don't exist
             if(sqlitedb.getUserById(user_id) == None):
                 return render_template('add_bid.html', message = 'Error: Invalid User ID !')
 
+            # @TODO: add more validation checks 
+
+
             # insert transaction 
+            message = ''
             t = sqlitedb.transaction()
             try:
                 sqlitedb.db.insert('Bids', ItemID = item_id, UserID = user_id, Amount = price, Time = current_time)
             
             except Exception as e:
                 t.rollback()
-                message = 'insert failed'
+                message = 'Error ! Bid did not get added.'
                 print str(e)
             
             else:
                 t.commit()
-                message = 'insert success'
+                message = 'Added Bid !'
+                print 'commited ' + str(t)
+                # message = 'insert success'
 
             # @TODO validations
             # add_result = 'executed.'
