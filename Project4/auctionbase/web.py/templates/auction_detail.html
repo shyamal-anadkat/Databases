@@ -1,32 +1,16 @@
 {% extends "app_base.html" %}
 {% block content %}
+
+{% set isClosed = false %}
+
 {% if status == 'Closed' %}
-<h4> <span class="label label-danger">CLOSED</span></h3>
+    <h4> <span class="label label-danger">CLOSED</span></h4>
+    {% set isClosed = true %}
 {% elif status == 'Open' %}
-<h4> <span class="label label-success">OPEN</span></h3>
+    <h4> <span class="label label-success">OPEN</span></h4>
 {% elif status == 'Not Started' %}
-<h4> <span class="label label-warning">NOT STARTED</span></h3>
+    <h4> <span class="label label-warning">NOT STARTED</span></h4>
 {% endif %}
-
-
-<h3> Auction Bids: </h3>
-<ul>
-    {% if bids %}
-    {% for result in bids %}
-    <div class="well">
-        {% for key in result %}
-        <div>
-            <span>{{ key|e }}</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>{{ result[key]|e }}</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endfor %}
-    {% else %}
-    <div>No Bids.</div>
-    {% endif %}
-</ul>
 
 <h3>Categories </h3>
 <ul>
@@ -58,4 +42,37 @@
     {% endif %}
 </ul>
 
+{% if isClosed %}
+    {% if bids|length != 0 %}
+        <h3> Winner: </h3>
+        <div class="well">
+            {% for key in bids[0] %}
+            <div>
+                <span>{{ key|e }}</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span>{{ bids[0][key]|e }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% else %}
+<h3> Auction Bids: </h3>
+<ul>
+    {% if bids %}
+    {% for result in bids %}
+    <div class="well">
+        {% for key in result %}
+        <div>
+            <span>{{ key|e }}</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span>{{ result[key]|e }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div>No Bids.</div>
+    {% endif %}
+</ul>
+{% endif %}
 {% endblock %}
