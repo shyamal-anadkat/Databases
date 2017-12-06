@@ -8,5 +8,5 @@ create trigger trigger1
 	before update of Time on CurrentTime
 	for each row when (NEW.Time <= OLD.Time)
 	begin
-		SELECT raise(rollback, ‘Trigger1_Failed’);
+		SELECT raise(rollback, 'Trigger1_Failed');
 	end;

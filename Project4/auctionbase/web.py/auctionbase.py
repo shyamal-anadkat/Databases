@@ -178,14 +178,12 @@ class select_time:
         # insert transaction 
         t = sqlitedb.transaction()
         try:
-            sqlitedb.db.query('delete from CurrentTime')
-            sqlitedb.db.insert('CurrentTime', Time = selected_time)
-        
+            _query = 'UPDATE CurrentTime SET Time = $time'
+            sqlitedb.db.query(_query, {'time': selected_time})
         except Exception as e:
+            print str(e)
             t.rollback()
             update_message = str(e)
-            print str(e)
-        
         else:
             t.commit()
 
