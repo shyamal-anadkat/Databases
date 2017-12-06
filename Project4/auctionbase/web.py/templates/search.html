@@ -59,20 +59,20 @@
             <span style="font-size: 16px; font-weight: 500;"> {{result['Name']}} </span>
             <br>
             <br>
-            <span class="label label-info">ItemID</span>
+            <span class="label label-default">ItemID</span>
             <span class=""> {{result['ItemID']}} </span>
             <br>
-            <span class="label label-info">Seller</span>
+            <span class="label label-default">Seller</span>
             <span class=""> {{result['Seller_UserID']}} </span>
             <br>
-            <span class="label label-info">Number of Bids</span>
+            <span class="label label-default">Number of Bids</span>
             <span class=""> {{result['Number_of_Bids']}} </span>
             <br>
-            <span class="label label-info">Current Price</span>
+            <span class="label label-default">Current Price</span>
             <span class=""> ${{result['Currently']}} </span>
             <br>
             <br>
-            <a class="btn btn-small btn-info float-right" href="auction/?item={{result['ItemID']}}" target="_blank">
+            <a class="btn btn-small btn-info float-right" href="auction?item={{result['ItemID']}}" target="_blank">
                 Auction Details
             </a>
         </div>
