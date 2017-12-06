@@ -59,7 +59,7 @@ urls = ('/currtime', 'curr_time',
         '/selecttime', 'select_time',
         '/search', 'search',
         '/add_bid', 'add_bid',
-        '/auction/(.*)', 'auction_detail',
+        '/auction(.*)', 'auction_detail',
         '/', 'home'
         # TODO: add additional URLs here
         # first parameter => URL, second parameter => class name
@@ -207,10 +207,11 @@ class select_time:
 class auction_detail:
     def GET(self, item):
         auction = web.input(item=None)
+        auction_detail = sqlitedb.getItemById(auction.item)
         categories = sqlitedb.getCategoriesByItemId(auction.item)
         status = sqlitedb.getStatusByItemId(auction.item)
         bids = sqlitedb.getBidsByItemId(auction.item)
-        return render_template('auction_detail.html', status=status, bids=bids, categories=categories, details='')
+        return render_template('auction_detail.html', status=status, bids=bids, categories=categories, details=auction_detail)
 
 
 ###########################################################################################
