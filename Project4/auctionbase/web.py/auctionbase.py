@@ -203,11 +203,13 @@ class select_time:
         # we'll refer to it in our template as `message'
         return render_template('select_time.html', message=update_message)
 
+
 class auction_detail:
     def GET(self, item):
         auction = web.input(item=None)
         categories = sqlitedb.getCategoriesByItemId(auction.item)
-        return render_template('auction_detail.html', status = '', bids ='', categories=categories, details='')
+        bids = sqlitedb.getBidsByItemId(auction.item)
+        return render_template('auction_detail.html', status='', bids=bids, categories=categories, details='')
 
 
 ###########################################################################################

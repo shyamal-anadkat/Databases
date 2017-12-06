@@ -76,11 +76,21 @@ def getStatusByItemId(item_id):
     except IndexError:
         return None
 
+
 def getCategoriesByItemId(item_id):
     query_string = 'select Category from Categories where ItemID = $itemID'
     try:
         results = query(query_string, {'itemID': item_id})
         return results
+    except IndexError:
+        return None
+
+
+def getBidsByItemId(item_id):
+    query_string = 'select * from Bids where ItemID = $itemID'
+    try:
+        bids = query(query_string, {'itemID': item_id})
+        return bids
     except IndexError:
         return None
 
