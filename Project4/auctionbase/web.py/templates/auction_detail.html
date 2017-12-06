@@ -1,6 +1,12 @@
 {% extends "app_base.html" %}
 {% block content %}
-<h3> Auction Info <span class="label label-info">{{status}}</span></h3>
+{% if status == 'Closed' %}
+<h4> <span class="label label-danger">CLOSED</span></h3>
+{% elif status == 'Open' %}
+<h4> <span class="label label-success">OPEN</span></h3>
+{% elif status == 'Not Started' %}
+<h4> <span class="label label-warning">NOT STARTED</span></h3>
+{% endif %}
 
 
 <h3> Auction Bids: </h3>
@@ -40,13 +46,11 @@
 <ul>
     {% if details %}
     {% for result in details %}
-    {% for key in result %}
     <div>
-        <span>{{ key|e }}</span>
+        <span>{{ result }}</span>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <span>{{ result[key]|e }}</span>
+        <span>{{ details[result]|e }}</span>
     </div>
-    {% endfor %}
     <div>--------</div>
     {% endfor %}
     {% else %}
