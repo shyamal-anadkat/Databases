@@ -208,8 +208,9 @@ class auction_detail:
     def GET(self, item):
         auction = web.input(item=None)
         categories = sqlitedb.getCategoriesByItemId(auction.item)
+        status = sqlitedb.getStatusByItemId(auction.item)
         bids = sqlitedb.getBidsByItemId(auction.item)
-        return render_template('auction_detail.html', status='', bids=bids, categories=categories, details='')
+        return render_template('auction_detail.html', status=status, bids=bids, categories=categories, details='')
 
 
 ###########################################################################################

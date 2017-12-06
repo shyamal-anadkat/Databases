@@ -68,11 +68,14 @@ def getUserById(user_id):
 
 
 def getStatusByItemId(item_id):
-    curr_time = getTime()
-    query_string = 'select '
+    query_string = 'select Started, Ends from Items where ItemID = $itemID '
     try:
-        result = query(query_string, {})
-    # return result[0]
+        result = query(query_string, {'itemID': item_id})
+        started = result[0]['Started']
+        ends = result[0]['Ends']
+        now = getTime()
+        status = 'Not Started' if (started > now) else 'Closed' if (ends < now) else 'Open'
+        return status
     except IndexError:
         return None
 

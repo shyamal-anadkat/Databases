@@ -1,22 +1,21 @@
 {% extends "app_base.html" %}
 {% block content %}
-<h3> Auction Info</h3>
-
-<h2>{{status}}</h2>
+<h3> Auction Info <span class="label label-info">{{status}}</span></h3>
 
 
 <h3> Auction Bids: </h3>
 <ul>
     {% if bids %}
     {% for result in bids %}
-    {% for key in result %}
-    <div>
-        <span>{{ key|e }}</span>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <span>{{ result[key]|e }}</span>
+    <div class="well">
+        {% for key in result %}
+        <div>
+            <span>{{ key|e }}</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span>{{ result[key]|e }}</span>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-    <div>--------</div>
     {% endfor %}
     {% else %}
     <div>No Bids.</div>
@@ -28,13 +27,8 @@
     {% if categories %}
     {% for result in categories %}
     {% for key in result %}
-    <div>
-        <span>{{ key|e }}</span>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <span>{{ result[key]|e }}</span>
-    </div>
+    <span class="label label-default">{{ result[key]|e }}</span>
     {% endfor %}
-    <div>--------</div>
     {% endfor %}
     {% else %}
     <div>No categories</div>
