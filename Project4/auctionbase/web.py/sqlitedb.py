@@ -110,7 +110,7 @@ def query(query_string, vars={}):
 # e.g. to update the current time
 
 def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
-    _query = 'SELECT * FROM Items'
+    _query = 'SELECT * FROM Items, CurrentTime'
     no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '')
 
     if not no_params:
