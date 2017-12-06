@@ -111,37 +111,46 @@ def query(query_string, vars={}):
 
 def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
     _query = 'SELECT * FROM Items'
-    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '' and minPrice == '')
+    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '')
 
     if not no_params:
         _query += ' WHERE '
+        putAnd = False;
+
         if (itemID != ''):
             _query += 'ItemID = ' + itemID
+            putAnd = True
 
         if (userID != ''):
-            if (itemID != ''):
+            if putAnd:
                 _query += ' AND '
             _query += ' Seller_UserID = ' + "'" + userID + "'"
+            putAnd = True
 
         if (minPrice != ''):
-            if (itemID != '' or userID != ''):
+            if putAnd:
                 _query += ' AND '
             _query += ' Currently >= ' + minPrice
+            putAnd = True
 
         if (maxPrice != ''):
-            if (itemID != '' or userID != '' or minPrice != ''):
+            if putAnd:
                 _query += ' AND '
             _query += ' Currently <= ' + maxPrice
+            putAnd = True
 
-        if (status != 'all'):
-            if (itemID != '' or userID != '' or minPrice != '' or maxPrice != ''):
-                _query += ' AND '
-            if status == 'open':
-                _query += '(select Time from CurrentTime) between Started and Ends'
-            elif status == 'notStarted':
-                _query += 'Started > (select Time from CurrentTime)'
-            elif status == 'close':
-                _query += 'Ends < (select Time from CurrentTime)'
+    if (status != 'all'):
+        if not no_params:
+            _query += ' AND '
+        else :
+            _query += ' WHERE '
+
+        if status == 'open':
+            _query += '(select Time from CurrentTime) between Started and Ends'
+        elif status == 'notStarted':
+            _query += 'Started > (select Time from CurrentTime)'
+        elif status == 'close':
+            _query += 'Ends < (select Time from CurrentTime)'
 
     result = query(_query)
     print _query  # debug
