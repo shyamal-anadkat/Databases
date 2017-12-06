@@ -90,7 +90,7 @@ def getCategoriesByItemId(item_id):
 
 
 def getBidsByItemId(item_id):
-    query_string = 'select * from Bids where ItemID = $itemID'
+    query_string = 'select * from Bids where ItemID = $itemID order by Time DESC'
     try:
         bids = query(query_string, {'itemID': item_id})
         return bids
