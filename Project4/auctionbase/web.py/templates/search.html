@@ -24,7 +24,7 @@
         <input type="text" name="maxPrice" class="form-control" id="maxPrice"/>
     </div>
     <div class="form-group">
-        <label for="status">Status &nbsp;&nbsp;</label>
+        <label for="status">Status: &nbsp;&nbsp;</label>
         <div class="radio-inline"><label><input type="radio" name="status" value="open">Open</label></div>
         <div class="radio-inline"><label><input type="radio" name="status" value="close">Close</label></div>
         <div class="radio-inline"><label><input type="radio" name="status" value="notStarted">Not Started</label></div>
@@ -33,11 +33,10 @@
     <div><input type="submit" value="Start Searching!" class="btn btn-primary"/></div>
 </form>
 <h3>Result</h3>
-<ul>
+<div class="list-group">
     {% if search_result %}
     {% for result in search_result %}
-    <div class="well">
-        {% for key in result %}
+        <!--{% for key in result %}
         <div>
             <span class="label label-primary">{{ key|e }}</span>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -47,18 +46,28 @@
             <span>{{ result[key]|e }}</span>
         </div>
         {% endfor %}
-        {% for key in result %}
-        {% if key == 'ItemID' %}
-        <div><br/><a class="btn btn-info" href="auction/?item={{result[key]}}" , target="view_blank">Auction Details
-            ></a>
+    -->
+        <div class="list-group-item">
+            <span style="font-size: 16px; font-weight: 500;"> {{result['Name']}} </span>
+            <br>
+            <br>
+            <span class="label label-info">ItemID</span>
+            <span class=""> {{result['ItemID']}} </span>
+            <!-- <br>
+            <span class="label label-info">Open</span>
+            <span class=""> {{result['Open']}} </span> -->
+            <br>
+            <br>
+            <a class="btn btn-small btn-info float-right" href="auction/?item={{result['ItemID']}}" target="_blank">
+                Auction Details
+            </a>
         </div>
-        {% endif %}
-        {% endfor %}
-    </div>
+
+
     {% endfor %}
     {% else %}
     <div>No results</div>
     {% endif %}
-</ul>
+</div>
 
 {% endblock %}
