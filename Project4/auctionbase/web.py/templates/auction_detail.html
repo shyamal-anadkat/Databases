@@ -2,12 +2,13 @@
 {% block content %}
 
 {% set isClosed = false %}
-
+{% set isOpen = false %}
 {% if status == 'Closed' %}
     <h4> <span class="label label-danger">CLOSED</span></h4>
     {% set isClosed = true %}
 {% elif status == 'Open' %}
     <h4> <span class="label label-success">OPEN</span></h4>
+    {% set isOpen = true %}
 {% elif status == 'Not Started' %}
     <h4> <span class="label label-warning">NOT STARTED</span></h4>
 {% endif %}
@@ -17,7 +18,7 @@
     {% if categories %}
     {% for result in categories %}
     {% for key in result %}
-    <span class="label label-default">{{ result[key]|e }}</span>
+    <span class="label label-default" style="font-size: 12px; font-weight: 500;">{{ result[key]|e }}</span>
     {% endfor %}
     {% endfor %}
     {% else %}
@@ -66,7 +67,8 @@
             {% endif %}
         </div>
     {% endif %}
-{% else %}
+{% elif isOpen %}
+<a href="add_bid?itemId={{ details['ItemID'] }}" target="_blank" class="btn btn-primary"> Bid Now </a>
 <h3> Auction Bids: </h3>
 <div class="table-responsive">
     {% if bids %}
