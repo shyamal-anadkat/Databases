@@ -154,7 +154,7 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', 
             _query += ' WHERE '
 
         if status == 'open':
-            _query += '(select Time from CurrentTime) between Started and Ends'
+            _query += '(select Time from CurrentTime) between Started and Ends AND (Buy_Price IS NULL OR Currently < Buy_Price)'
         elif status == 'notStarted':
             _query += 'Started > (select Time from CurrentTime)'
         elif status == 'close':
