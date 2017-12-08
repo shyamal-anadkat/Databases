@@ -152,7 +152,7 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
         elif status == 'notStarted':
             _query += 'Started > (select Time from CurrentTime)'
         elif status == 'close':
-            _query += 'Ends < (select Time from CurrentTime)'
+            _query += '(Ends < (select Time from CurrentTime) OR Currently >= Buy_Price)'
 
     _query += " ORDER BY Number_of_Bids DESC"
     result = query(_query)
