@@ -95,9 +95,11 @@ class search:
             min_price = search_params['minPrice']
             max_price = search_params['maxPrice']
             status = search_params['status']
+            desc = search_params['description']
+
             items = []
 
-            items = sqlitedb.getItemsOnSearch(item_id, user_id, min_price, max_price, status)
+            items = sqlitedb.getItemsOnSearch(item_id, user_id, min_price, max_price, status, desc)
             # @TODO queries in sqlitedb
             message = 'Success ! Retreived ' + str(len(items)) + ' results.'
 

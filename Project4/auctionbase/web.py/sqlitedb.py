@@ -92,7 +92,7 @@ def getCategoriesByItemId(item_id):
 
 
 def getBidsByItemId(item_id):
-    query_string = 'select * from Bids where ItemID = $itemID order by Time DESC'
+    query_string = 'select * from Bids where ItemID = $itemID order by Amount DESC, Time DESC'
     try:
         bids = query(query_string, {'itemID': item_id})
         return bids
@@ -111,9 +111,9 @@ def query(query_string, vars={}):
 # TODO: additional methods to interact with your database,
 # e.g. to update the current time
 
-def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
+def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', desc = ''):
     _query = 'SELECT * FROM Items, CurrentTime'
-    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '')
+    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '' and desc == '')
 
     if not no_params:
         _query += ' WHERE '
@@ -126,26 +126,32 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
         if (userID != ''):
             if putAnd:
                 _query += ' AND '
-            _query += ' Seller_UserID = ' + "'" + userID + "'"
+            _query += 'Seller_UserID = ' + "'" + userID + "'"
             putAnd = True
 
         if (minPrice != ''):
             if putAnd:
                 _query += ' AND '
-            _query += ' Currently >= ' + minPrice
+            _query += 'Currently >= ' + minPrice
             putAnd = True
 
         if (maxPrice != ''):
             if putAnd:
                 _query += ' AND '
-            _query += ' Currently <= ' + maxPrice
+            _query += 'Currently <= ' + maxPrice
             putAnd = True
+
+        if (desc != ''):
+            if putAnd:
+                _query += ' AND '
+            _query += 'Description LIKE \'%' + desc + '%\''
+            putAnd = True;
 
     if (status != 'all'):
         if not no_params:
             _query += ' AND '
         else :
-            _query += ' WHERE '
+            _query += ' '
 
         if status == 'open':
             _query += '(select Time from CurrentTime) between Started and Ends'
