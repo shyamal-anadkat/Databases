@@ -150,8 +150,8 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', 
     if (status != 'all'):
         if not no_params:
             _query += ' AND '
-        else :
-            _query += ' '
+        else:
+            _query += ' WHERE '
 
         if status == 'open':
             _query += '(select Time from CurrentTime) between Started and Ends'
