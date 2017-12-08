@@ -1,6 +1,6 @@
 {% extends "app_base.html" %}
 {% block content %}
-<h3> Add bid </h3> 
+<h3> Add bid </h3>
 <form method="POST" action="add_bid" style="max-width:400px; width:100%">
 	{% if message is defined %}
 	<div class="alert alert-warning">{{ message }}</div>
@@ -21,10 +21,11 @@
 	<div class="form-group"><input type="submit" value="Add bid" class="btn btn-primary"/></div>
 </form>
 </center>
+{% if add_result == 1 %}
 <h3>Result</h3>
-{% if add_result %}
 <div class="alert alert-success">Successful</div>
-{% else %}
+{% elif add_result == -1 %}
+<h3>Result</h3>
 <div class="alert alert-danger">Not successful</div>
 {% endif %}
 
