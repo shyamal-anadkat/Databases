@@ -109,7 +109,9 @@ class search:
 
 class add_bid:
     def GET(self):
-        return render_template('add_bid.html')
+        get_param = web.input(itemId="");
+        item = get_param['itemId'];
+        return render_template('add_bid.html', itemId = item)
 
     def POST(self):
         try:
