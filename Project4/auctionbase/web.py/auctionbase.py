@@ -170,7 +170,8 @@ class add_bid:
 class select_time:
     # Aanother GET request, this time to the URL '/selecttime'
     def GET(self):
-        return render_template('select_time.html')
+        current_time = sqlitedb.getTime()
+        return render_template('select_time.html', curr_time = current_time)
 
     # A POST request
     #
@@ -188,7 +189,7 @@ class select_time:
         enter_name = post_params['entername']
 
         selected_time = '%s-%s-%s %s:%s:%s' % (yyyy, MM, dd, HH, mm, ss)
-        update_message = '(Hello, %s. Previously selected time was: %s.)' % (enter_name, selected_time)
+        update_message = '(Hello, %s. Time was successfully updated!)' % (enter_name)
         # TODO: save the selected time as the current time in the database
         # insert transaction
 
@@ -203,9 +204,11 @@ class select_time:
         else:
             t.commit()
 
+        current_time = sqlitedb.getTime()
+
         # Here, we assign `update_message' to `message', which means
         # we'll refer to it in our template as `message'
-        return render_template('select_time.html', message=update_message)
+        return render_template('select_time.html', message=update_message, curr_time = current_time)
 
 
 class auction_detail:
