@@ -4,13 +4,13 @@
 {% set isClosed = false %}
 {% set isOpen = false %}
 {% if status == 'Closed' %}
-    <h4> <span class="label label-danger">CLOSED</span></h4>
-    {% set isClosed = true %}
+<h4><span class="label label-danger">CLOSED</span></h4>
+{% set isClosed = true %}
 {% elif status == 'Open' %}
-    <h4> <span class="label label-success">OPEN</span></h4>
-    {% set isOpen = true %}
+<h4><span class="label label-success">OPEN</span></h4>
+{% set isOpen = true %}
 {% elif status == 'Not Started' %}
-    <h4> <span class="label label-warning">NOT STARTED</span></h4>
+<h4><span class="label label-warning">NOT STARTED</span></h4>
 {% endif %}
 
 <h3>Categories </h3>
@@ -26,70 +26,79 @@
     {% endif %}
 </ul>
 
+<hr/>
 <h3> Auction Details</h3>
 
-<ul>
-    {% if details %}
+{% if details %}
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>Attribute</th>
+        <th>Details</th>
+    </tr>
+    </thead>
+    <tbody>
     {% for result in details %}
-    <div>
-        <span>{{ result }}</span>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <span>{{ details[result]|e }}</span>
-    </div>
-    <div>--------</div>
+    <tr>
+        <td>{{ result.replace("_", " ") }}</td>
+        <td>{{ details[result]|e }}</td>
+    </tr>
+    </tbody>
     {% endfor %}
-    {% else %}
-    <div>No results</div>
-    {% endif %}
-</ul>
+</table>
+{% else %}
+<div>No results</div>
+{% endif %}
+
+<hr/>
 
 {% if isClosed %}
-    {% if bids|length != 0 %}
-        <h3> Winner: </h3>
-        <div class="table-responsive">
-            {% if bids %}
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th> Amount </th>
-                            <th> UserID </th>
-                            <th> Time </th>
-                        </tr>
-                    </thead>
-                    <tr>
-                        <td> $ {{ bids[0]['Amount']|e }} </td>
-                        <td> {{ bids[0]['UserID']|e }} </td>
-                        <td> {{ bids[0]['Time']|e }} </td>
-                    </tr>
-                </table>
-            {% else %}
-                <div>No Bids.</div>
-            {% endif %}
-        </div>
+{% if bids|length != 0 %}
+<h3> Winner: </h3>
+<div class="table-responsive">
+    {% if bids %}
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th> Amount</th>
+            <th> UserID</th>
+            <th> Time</th>
+        </tr>
+        </thead>
+        <tr>
+            <td> $ {{ bids[0]['Amount']|e }}</td>
+            <td> {{ bids[0]['UserID']|e }}</td>
+            <td> {{ bids[0]['Time']|e }}</td>
+        </tr>
+    </table>
+    {% else %}
+    <div>No Bids.</div>
     {% endif %}
+</div>
+{% endif %}
 {% elif isOpen %}
 <a href="add_bid?itemId={{ details['ItemID'] }}" target="_blank" class="btn btn-primary"> Bid Now </a>
 <h3> Auction Bids: </h3>
 <div class="table-responsive">
     {% if bids %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th> Amount </th>
-                    <th> UserID </th>
-                    <th> Time </th>
-                </tr>
-            </thead>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th> Amount</th>
+            <th> UserID</th>
+            <th> Time</th>
+        </tr>
+        </thead>
         {% for result in bids %}
-            <tr>
-                <td> $ {{ result['Amount']|e }} </td>
-                <td> {{ result['UserID']|e }} </td>
-                <td> {{ result['Time']|e }} </td>
-            </tr>
+        <tr>
+            <td> $ {{ result['Amount']|e }}</td>
+            <td> {{ result['UserID']|e }}</td>
+            <td> {{ result['Time']|e }}</td>
+        </tr>
         {% endfor %}
-        </table>
+    </table>
     {% else %}
-        <div>No Bids.</div>
+    <div>No Bids.</div>
     {% endif %}
 </div>
 {% endif %}
