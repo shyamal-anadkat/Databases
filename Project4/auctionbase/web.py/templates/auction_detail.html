@@ -45,14 +45,25 @@
 {% if isClosed %}
     {% if bids|length != 0 %}
         <h3> Winner: </h3>
-        <div class="well">
-            {% for key in bids[0] %}
-            <div>
-                <span>{{ key|e }}</span>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <span>{{ bids[0][key]|e }}</span>
-            </div>
-            {% endfor %}
+        <div class="table-responsive">
+            {% if bids %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th> Amount </th>
+                            <th> UserID </th>
+                            <th> Time </th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td> $ {{ bids[0]['Amount']|e }} </td>
+                        <td> {{ bids[0]['UserID']|e }} </td>
+                        <td> {{ bids[0]['Time']|e }} </td>
+                    </tr>
+                </table>
+            {% else %}
+                <div>No Bids.</div>
+            {% endif %}
         </div>
     {% endif %}
 {% else %}
