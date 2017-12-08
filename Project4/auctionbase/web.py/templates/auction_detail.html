@@ -57,22 +57,27 @@
     {% endif %}
 {% else %}
 <h3> Auction Bids: </h3>
-<ul>
+<div class="table-responsive">
     {% if bids %}
-    {% for result in bids %}
-    <div class="well">
-        {% for key in result %}
-        <div>
-            <span>{{ key|e }}</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>{{ result[key]|e }}</span>
-        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th> Amount </th>
+                    <th> UserID </th>
+                    <th> Time </th>
+                </tr>
+            </thead>
+        {% for result in bids %}
+            <tr>
+                <td> $ {{ result['Amount']|e }} </td>
+                <td> {{ result['UserID']|e }} </td>
+                <td> {{ result['Time']|e }} </td>
+            </tr>
         {% endfor %}
-    </div>
-    {% endfor %}
+        </table>
     {% else %}
-    <div>No Bids.</div>
+        <div>No Bids.</div>
     {% endif %}
-</ul>
+</div>
 {% endif %}
 {% endblock %}
