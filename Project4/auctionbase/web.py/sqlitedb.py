@@ -76,7 +76,7 @@ def getStatusByItemId(item_id):
         currently = result[0]['Currently']
         buy_price = result[0]['Buy_Price']
         now = getTime()
-        status = 'Not Started' if (started > now) else 'Closed' if (ends < now or currently >= buy_price) else 'Open'
+        status = 'Not Started' if (started > now) else 'Closed' if (ends < now or (buy_price and currently >= buy_price)) else 'Open'
         return status
     except IndexError:
         return None
@@ -152,7 +152,7 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status=''):
         elif status == 'notStarted':
             _query += 'Started > (select Time from CurrentTime)'
         elif status == 'close':
-            _query += '(Ends < (select Time from CurrentTime) OR Currently >= Buy_Price)'
+            _query += '(Ends < (select Time from CurrentTime) OR (Buy_Price NOT NULL AND Currently >= Buy_Price))'
 
     _query += " ORDER BY Number_of_Bids DESC"
     result = query(_query)
