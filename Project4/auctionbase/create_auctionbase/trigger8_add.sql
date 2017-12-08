@@ -8,5 +8,5 @@ create trigger trigger8
 	after insert on Bids
 	for each row
 	begin
-		UPDATE Items SET Currently = New.Amount;
+		UPDATE Items SET Currently = New.Amount WHERE ItemID = New.ItemID;
 	end;
