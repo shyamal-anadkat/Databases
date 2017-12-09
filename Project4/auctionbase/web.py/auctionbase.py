@@ -140,26 +140,21 @@ class add_bid:
 
             # @TODO: add more validation checks
 
-
             # insert transaction
-            message = ''
             t = sqlitedb.transaction()
             try:
                 sqlitedb.db.insert('Bids', ItemID=item_id, UserID=user_id, Amount=price, Time=current_time)
 
             except Exception as e:
                 t.rollback()
-                message = 'Error ! Bid did not get added.'
+                message = str(e)
                 print str(e)
 
             else:
                 t.commit()
-                message = 'Added Bid !'
+                message = 'Success ! Added bid for ' + str(item_id) + ' by ' + str(user_id) + ' at $' + str(price)
                 print 'commited ' + str(t)
-                # message = 'insert success'
-
                 # @TODO validations
-                # add_result = 'executed.'
 
         except Exception as e:
             message = str(e)
