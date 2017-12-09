@@ -48,7 +48,7 @@
         {% endfor %}
     -->
         <div class="list-group-item">
-            {% if result['Time'] >= result['Started'] and result['Time'] <= result['Ends'] and result['Currently'] < result['Buy_Price'] %}
+            {% if result['Time'] >= result['Started'] and result['Time'] <= result['Ends'] and (not result['Buy_Price'] or result['Currently'] < result['Buy_Price']) %}
             <span class="label label-success"> OPEN</span>
             {% elif result['Time'] > result['Ends'] or result['Currently'] >= result['Buy_Price'] %}
             <span class="label label-danger"> CLOSED</span>
