@@ -8,5 +8,5 @@ create trigger trigger5
 	before insert on Bids
 	for each row when (NEW.Time < (Select i.Started from Items i where NEW.ItemID = i.ItemID))
 	begin
-		SELECT raise(rollback, 'Failed ! No auction may have a bid before start time or after end time.');
+		SELECT raise(rollback, 'Bid Failed! No bids may be placed before auction start time or after end time.');
 	end;
