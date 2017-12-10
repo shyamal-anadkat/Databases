@@ -111,9 +111,9 @@ def query(query_string, vars={}):
 # TODO: additional methods to interact with your database,
 # e.g. to update the current time
 
-def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', desc = ''):
+def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', desc = '', category = ''):
     _query = 'SELECT * FROM Items, CurrentTime'
-    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '' and desc == '')
+    no_params = (itemID == '' and userID == '' and minPrice == '' and maxPrice == '' and desc == '' and category == '')
 
     if not no_params:
         _query += ' WHERE '
@@ -145,6 +145,12 @@ def getItemsOnSearch(itemID='', userID='', minPrice='', maxPrice='', status='', 
             if putAnd:
                 _query += ' AND '
             _query += 'Description LIKE \'%' + desc + '%\''
+            putAnd = True;
+
+        if (category != ''):
+            if putAnd:
+                _query += ' AND '
+            _query += '(SELECT COUNT(*) FROM Categories WHERE ItemID = Items.ItemID AND Category LIKE \'%' + category + '%\') > 0'
             putAnd = True;
 
     if (status != 'all'):
