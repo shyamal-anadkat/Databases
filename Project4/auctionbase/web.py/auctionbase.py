@@ -106,7 +106,7 @@ class search:
         except Exception as e:
             message = str(e)
 
-        return render_template('search.html', search_result=items, message=message, hide_loader=hideLoader)
+        return render_template('search.html', search_result=items, message=message, hide_loader=hideLoader, search=search_params)
 
 
 class add_bid:

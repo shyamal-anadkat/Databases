@@ -9,7 +9,54 @@
     <div class="alert alert-warning" role="alert">{{ message }}</div>
     {% endif %}
     <div class="alert alert-info">Anything not input will not be taken into account</div>
+    {% if search %}
     <div class="form-group">
+
+        <label for="itemID">Item ID</label>
+        <input type="text" class="form-control" id="itemID" name="itemID" value="{{ search['itemID'] }}"/>
+
+        <label for="userID">User ID</label>
+        <input type="text" name="userID" class="form-control" id="userID" value="{{ search['userID'] }}"/>
+
+        <label for="category">Category</label>
+        <input type="text" name="category" class="form-control" id="category" value="{{ search['category'] }}"/>
+
+        <label for="minPrice">Min Price</label>
+        <input type="text" name="minPrice" class="form-control" id="minPrice" value="{{ search['minPrice'] }}"/>
+
+        <label for="maxPrice">Max Price</label>
+        <input type="text" name="maxPrice" class="form-control" id="maxPrice" value="{{ search['maxPrice'] }}"/>
+
+        <label for="description"> Description </label>
+        <input type="text" name="description" class="form-control" id="desc" value="{{ search['description'] }}"/>
+    </div>
+    <div class="form-group">
+        <label for="status">Status: &nbsp;&nbsp;</label>
+
+        <div class="radio-inline"><label><input type="radio" name="status" value="open"
+            {% if search['status'] == 'open' %}
+            checked
+            {% endif %}
+        >Open</label></div>
+        <div class="radio-inline"><label><input type="radio" name="status" value="close"
+            {% if search['status'] == 'close' %}
+            checked
+            {% endif %}
+        >Close</label></div>
+        <div class="radio-inline"><label><input type="radio" name="status" value="notStarted"
+            {% if search['status'] == 'notStarted' %}
+            checked
+            {% endif %}
+        >Not Started</label></div>
+        <div class="radio-inline"><label><input type="radio" name="status" value="all"
+            {% if search['status'] == 'all' %}
+            checked
+            {% endif %}
+        >All</label></div>
+    </div>
+    {% else %}
+    <div class="form-group">
+
         <label for="itemID">Item ID</label>
         <input type="text" class="form-control" id="itemID" name="itemID"/>
 
@@ -30,11 +77,14 @@
     </div>
     <div class="form-group">
         <label for="status">Status: &nbsp;&nbsp;</label>
+
         <div class="radio-inline"><label><input type="radio" name="status" value="open">Open</label></div>
         <div class="radio-inline"><label><input type="radio" name="status" value="close">Close</label></div>
         <div class="radio-inline"><label><input type="radio" name="status" value="notStarted">Not Started</label></div>
         <div class="radio-inline"><label><input type="radio" name="status" value="all" checked>All</label></div>
     </div>
+    {% endif %}
+
     <div><input type="submit" value="Start Searching!" class="btn btn-primary"/></div>
 </form>
 <h3>Result</h3>
