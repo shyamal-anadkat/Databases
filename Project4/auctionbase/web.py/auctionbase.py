@@ -97,6 +97,7 @@ class search:
             desc = search_params['description']
             category = search_params['category']
             items = []
+            hideLoader = True
 
             items = sqlitedb.getItemsOnSearch(item_id, user_id, min_price, max_price, status, desc, category)
             # @TODO queries in sqlitedb
@@ -105,7 +106,7 @@ class search:
         except Exception as e:
             message = str(e)
 
-        return render_template('search.html', search_result=items, message=message)
+        return render_template('search.html', search_result=items, message=message, hide_loader=hideLoader)
 
 
 class add_bid:

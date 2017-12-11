@@ -2,7 +2,9 @@
 {% block content %}
 <h3> Search </h3>
 
-<form method="POST" action="search" role="form" style="max-width:400px; width:100%">
+<div id="loader"></div>
+<form method="POST" action="search" role="form" style="max-width:400px; width:100%"
+      onsubmit="var d = document.getElementById('loader'); d.className += 'loading';">
     {% if message is defined %}
     <div class="alert alert-warning" role="alert">{{ message }}</div>
     {% endif %}
@@ -37,53 +39,58 @@
 </form>
 <h3>Result</h3>
 <div class="list-group">
+
+    {% if hide_loader %}
+    <script>document.getElementsByClassName('loading')[0].style.visibility = 'hidden';</script>
+    {% endif %}
     {% if search_result %}
     {% for result in search_result %}
-        <!--{% for key in result %}
-        <div>
-            <span class="label label-primary">{{ key|e }}</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            {% if key == 'Description' %}
-            <br/>
-            {% endif %}
-            <span>{{ result[key]|e }}</span>
-        </div>
-        {% endfor %}
-    -->
-        <div class="list-group-item">
-            {% if result['Time'] >= result['Started'] and result['Time'] <= result['Ends'] and (not result['Buy_Price'] or result['Currently'] < result['Buy_Price']) %}
-            <span class="label label-success"> OPEN</span>
-            {% elif result['Time'] > result['Ends'] or result['Currently'] >= result['Buy_Price'] %}
-            <span class="label label-danger"> CLOSED</span>
-            {% elif result['Time'] < result['Started'] %}
-            <span class="label label-warning"> NOT STARTED</span>
-            {% endif %}
-            <br>
-            <span style="font-size: 16px; font-weight: 500;"> {{result['Name']}} </span>
-            <br>
-            <br>
-            <span class="label label-default">ItemID</span>
-            <span class=""> {{result['ItemID']}} </span>
-            <br>
-            <span class="label label-default">Seller</span>
-            <span class=""> {{result['Seller_UserID']}} </span>
-            <br>
-            <span class="label label-default">Number of Bids</span>
-            <span class=""> {{result['Number_of_Bids']}} </span>
-            <br>
-            <span class="label label-default">Current Price</span>
-            <span class=""> ${{result['Currently']}} </span>
-            {% if result['Buy_Price'] %}
-                <br>
-                <span class="label label-default">Buy Price</span>
-                <span class=""> ${{result['Buy_Price']}} </span>
-            {% endif %}
-            <br>
-            <br>
-            <a class="btn btn-small btn-info float-right" href="auction?item={{result['ItemID']}}" target="_blank">
-                Auction Details
-            </a>
-        </div>
+    <!--{% for key in result %}
+    <div>
+        <span class="label label-primary">{{ key|e }}</span>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {% if key == 'Description' %}
+        <br/>
+        {% endif %}
+        <span>{{ result[key]|e }}</span>
+    </div>
+    {% endfor %}
+-->
+    <div class="list-group-item">
+        {% if result['Time'] >= result['Started'] and result['Time'] <= result['Ends'] and (not result['Buy_Price'] or
+        result['Currently'] < result['Buy_Price']) %}
+        <span class="label label-success"> OPEN</span>
+        {% elif result['Time'] > result['Ends'] or result['Currently'] >= result['Buy_Price'] %}
+        <span class="label label-danger"> CLOSED</span>
+        {% elif result['Time'] < result['Started'] %}
+        <span class="label label-warning"> NOT STARTED</span>
+        {% endif %}
+        <br>
+        <span style="font-size: 16px; font-weight: 500;"> {{result['Name']}} </span>
+        <br>
+        <br>
+        <span class="label label-default">ItemID</span>
+        <span class=""> {{result['ItemID']}} </span>
+        <br>
+        <span class="label label-default">Seller</span>
+        <span class=""> {{result['Seller_UserID']}} </span>
+        <br>
+        <span class="label label-default">Number of Bids</span>
+        <span class=""> {{result['Number_of_Bids']}} </span>
+        <br>
+        <span class="label label-default">Current Price</span>
+        <span class=""> ${{result['Currently']}} </span>
+        {% if result['Buy_Price'] %}
+        <br>
+        <span class="label label-default">Buy Price</span>
+        <span class=""> ${{result['Buy_Price']}} </span>
+        {% endif %}
+        <br>
+        <br>
+        <a class="btn btn-small btn-info float-right" href="auction?item={{result['ItemID']}}" target="_blank">
+            Auction Details
+        </a>
+    </div>
 
 
     {% endfor %}
